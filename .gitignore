@@ -1,0 +1,11 @@
+# Build artifacts — the export's publish step (pip wheel) and any local
+# `python -m build` write these into the tree; committing them breaks CI
+# (two wheels in dist/ install as a version conflict) and the release glob.
+build/
+dist/
+*.egg-info/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
