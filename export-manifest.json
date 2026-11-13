@@ -1,0 +1,221 @@
+{
+  "names": [
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "AreaCreated",
+      "signature": "class:area_path: str;way_uuid: int"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "Diagnostic",
+      "signature": "class:code: str;fix_suggestion: str;message: str;prim_path: str;severity: Severity"
+    },
+    {
+      "kind": "class",
+      "module": "core.events",
+      "name": "DomainEvent",
+      "signature": "class:source: str;timestamp: float"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "EditorContext",
+      "signature": "class:activate_tool: Optional[Callable[[str], None]];active_tool_id: Optional[Callable[[], Optional[str]]];hover_prim: Optional[Callable];push_undo: Optional[Callable];request_refresh: Optional[Callable];select_prim: Optional[Callable];stage: 'Usd.Stage';stage_manager: 'StageManagerInterface';translate: Optional[Callable]"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "ExportReport",
+      "signature": "class:diagnostics: list[Diagnostic];format_name: str;output_path: str;stats: dict;success: bool"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IExporter",
+      "signature": "class:display_name(self) -> 'str';export_format(self) -> 'str';export_stage(self, stage, stage_mgr: \"'StageManagerInterface'\", output_path: 'str', options: 'dict') -> \"'ExportReport'\";exporter_id(self) -> 'str';plugin_id"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IFileImporter",
+      "signature": "class:dest_layer_name(self, source_path: 'str') -> 'str | None';destination_category(self) -> 'str | None';import_file(self, source_path: 'str', dest_layer_path: 'str', options: 'dict') -> 'str';import_options(self) -> 'Optional[dict]';import_tile_batch(self, dest_layer_path: 'str', tiles: 'list', unit_name: 'str', display_name: 'str') -> 'str';plugin_id;supported_extensions(self) -> 'list[str]';unavailable_reason(self, stage) -> 'Optional[str]';wants_site_origin(self) -> 'bool';wants_unit_name(self) -> 'bool';writes_map_layer(self, source_path: 'str', options: 'dict') -> 'bool'"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IFusionPlugin",
+      "signature": "class:display_name(self) -> 'str';fusion_id(self) -> 'str';on_mutation(self, prim, mutation_ctx: \"'StageMutationContext'\") -> 'None';plugin_id;poll(stage_mgr: \"'StageManagerInterface'\") -> 'bool';prim_filter(self, prim) -> 'bool';priority(self) -> 'int'"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IIntegrationPlugin",
+      "signature": "class:display_name(self) -> 'str';integration_id(self) -> 'str';on_stage_closing(self, stage_mgr: \"'StageManagerInterface'\") -> 'None';on_stage_opened(self, stage_mgr: \"'StageManagerInterface'\") -> 'None';plugin_id"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IPanelFactory",
+      "signature": "class:create_panel(self, parent, context: \"'PanelContext'\");default_area(self) -> 'str';display_name(self) -> 'str';panel_id(self) -> 'str';plugin_id"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IPluginPreferences",
+      "signature": "class:create_preferences_widget(self, parent, values: 'dict');fields(self) -> 'dict';plugin_id"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IStageContributor",
+      "signature": "class:default_layer_path(self) -> 'str';layer_name(self) -> 'str';layer_strategy(self) -> 'str';on_stage_closing(self, stage_mgr: \"'StageManagerInterface'\") -> 'None';on_stage_opened(self, stage_mgr: \"'StageManagerInterface'\") -> 'None';plugin_id"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IToolProvider",
+      "signature": "class:activate(self, context: \"'ToolContext'\") -> 'None';activate_with_mode(self, context: \"'ToolContext'\", mode: 'str') -> 'None';commit_active_session(self, context: \"'ToolContext'\") -> 'ToolResult';deactivate(self, context: \"'ToolContext'\") -> 'None';display_name(self) -> 'str';execute(self, context: \"'ToolContext'\") -> 'ToolResult';get_auxiliary_dock_title(self) -> 'str';get_auxiliary_dock_widget(self, parent=None);get_available_modes(self) -> 'list[tuple[str, str]]';get_creation_session(self) -> \"Optional['CreationSession']\";get_current_mode(self) -> 'str';get_options_widget(self, parent);has_active_session(self) -> 'bool';icon_path(self) -> 'Optional[str]';on_cancel(self) -> 'Optional[str]';on_creation_discard(self, context: \"'ToolContext'\") -> 'None';on_creation_finish(self, context: \"'ToolContext'\") -> 'ToolResult';on_creation_repeat(self, context: \"'ToolContext'\") -> 'ToolResult';on_mode_enter(self, mode_id: 'str') -> 'None';on_mode_exit(self, mode_id: 'str') -> 'None';on_workspace_enter(self, workspace_id: 'str') -> 'None';on_workspace_exit(self, workspace_id: 'str') -> 'None';plugin_id;poll(context: \"'ToolContext'\") -> 'bool';poll_reason(context: \"'ToolContext'\") -> 'Optional[str]';preferred_camera_mode(self) -> 'str';process_event(self, context: \"'ToolContext'\", event: \"'ToolEvent'\") -> 'ToolResult';restore_state(self, state: 'dict') -> 'None';save_state(self) -> 'dict';tool_description(self) -> 'str';tool_id(self) -> 'str';tool_shortcut(self) -> 'str'"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "IValidator",
+      "signature": "class:display_name(self) -> 'str';plugin_id;validate(self, stage, stage_mgr: \"'StageManagerInterface'\") -> \"'ValidationReport'\";validator_id(self) -> 'str'"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "LaneletCommitted",
+      "signature": "class:lanelet_path: str;lanelet_uuid: int | None"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "LaneletDeleted",
+      "signature": "class:lanelet_path: str;lanelet_uuid: int | None"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "LiftSessionEnded",
+      "signature": "class:paths: tuple[str, ...]"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "LiftSessionStarted",
+      "signature": "class:paths: tuple[str, ...]"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "NodesPruned",
+      "signature": "class:pruned_uuids: tuple[str, ...];remaining_count: int"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "PanelContext",
+      "signature": "class:current_locale: str;on_selection_changed: Optional[Callable];on_stage_changed: Optional[Callable];on_viewport_changed: Optional[Callable];plugin_data_dir: Optional[Callable];preferences: dict;project_dir: str;push_undo: Optional[Callable];stage: 'Usd.Stage';stage_manager: 'StageManagerInterface';translate: Optional[Callable]"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "PluginMeta",
+      "signature": "class:author: str;dependencies: dict;description: str;display_name: str;enabled: bool;from_plug_info(name: 'str', atlas: 'dict') -> \"'PluginMeta'\";imports: list[str];layers: dict[str, LayerStrategy];min_core_version: Optional[str];module_path: Optional[str];name: str;panels: list[str];permissions: dict;sdk_version: str;tool_workspaces: dict;tools: list[str];version: str;workspace_buttons: dict"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "RegulatoryElementDeleted",
+      "signature": "class:element_path: str;element_type: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "Severity",
+      "signature": "class:ERROR;INFO;WARNING"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "StageManagerInterface",
+      "signature": "class:add_sublayer(self, layer_path: 'str', position: 'int' = -1) -> 'None';create_atlas_prim(self, atlas_type_name: 'str', position, **kwargs) -> 'str';create_checkpoint(self, label: 'str' = '') -> 'str';delete_prim(self, prim_path: 'str', plugin_id: 'str' = '', checkpoint=None) -> 'bool';ensure_draft_overlay(self, original_path: 'str') -> 'str | None';ensure_editable_category(self, category: 'str') -> 'str | None';ensure_editable_layer(self, layer_path: 'str') -> 'str | None';ensure_editable_prim(self, prim_path: 'str') -> 'str | None';ensure_named_category_layer(self, category: 'str', file_name: 'str') -> 'str | None';find_all_point_clouds(self) -> 'list';find_point_cloud(self);find_point_cloud_frame(self);get_draft_layer_path(self, original_path: 'str') -> 'str | None';get_ground_height_at(self, x: 'float', y: 'float') -> 'float';get_layer_by_identifier(self, identifier: 'str');get_layer_paths(self) -> 'list[str]';get_project_dir(self) -> 'str';get_stage(self) -> \"'Usd.Stage'\";has_ground_mesh(self) -> 'bool';has_unsaved_layers(self) -> 'bool';is_dirty(self) -> 'bool';is_draft_path(self, layer_path: 'str') -> 'bool';mark_dirty(self) -> 'None';mark_dirty_layer(self, layer_id: 'str' = None) -> 'None';notify_prims_modified(self, prim_paths: 'list[str]') -> 'None';read_site_origin(self);save_draft_overlays(self) -> 'int';save_layer(self, layer_path: 'str') -> 'None';save_stage(self) -> 'None';set_edit_target(self, layer_path: 'str') -> 'None'"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "StageMutationContext",
+      "signature": "class:edit_target_layer_path: str;edit_target_scope(self, layer_path: 'str');find_nearest_prim: Optional[Callable];find_prims_in_radius: Optional[Callable];get_ground_height: Optional[Callable];is_atlas_object: Optional[Callable];is_navigable_target: Optional[Callable];originator_id: str;plugin_id: str;stage: 'Usd.Stage';stage_manager: 'StageManagerInterface';translate: Optional[Callable];triggering_prim_path: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.events",
+      "name": "SublayersRewired",
+      "signature": "class:detail: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.events",
+      "name": "ToolActivated",
+      "signature": "class:plugin_id: str;source: str;tool_id: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "ToolContext",
+      "signature": "class:clear_auxiliary_dock: Optional[Callable[[], None]];consolidate_point_cloud_run: Optional[Callable[[str, str], Any]];create_edit_scope: Optional[Callable[[str, str], Any]];create_multi_undo_checkpoint: Optional[Callable[[str], Any]];create_named_category_layer(self, file_name: 'str', category: 'str') -> 'str | None';create_undo_checkpoint: Optional[Callable[[str, str, str], Any]];current_locale: str;discard_point_cloud_run: Optional[Callable[[str], Any]];edit_target_scope(self, layer_path: 'str');find_nearest_prim: Optional[Callable[[float, float, float], Optional[str]]];find_prims_in_radius: Optional[Callable[[float, float, float, float], list]];frame_prim: Optional[Callable[[str], None]];get_assembly_terminals: Optional[Callable[[str], Any]];get_atlas_object_id: Optional[Callable[[str], Optional[str]]];get_atlas_type: Optional[Callable[[str], Any]];get_ground_height: Optional[Callable[[float, float], float]];get_ground_mesh_height: Optional[Callable[[float, float], Optional[float]]];get_selection_set: Optional[Callable[[], list]];get_world_center: Optional[Callable[[str], Any]];gizmo_manager: 'GizmoManagerInterface';has_ground_mesh_at: Optional[Callable[[float, float], bool]];hide_progress: Optional[Callable[[], None]];import_file: Optional[Callable[[str, Any], dict]];is_atlas_object: Optional[Callable[[str], bool]];is_navigable_target: Optional[Callable[[str], bool]];jobs: 'JobServiceInterface';on_selection_changed: Optional[Callable[[Any], None]];plugin_data_dir: Optional[Callable[[], str]];plugin_id: str;preferences: dict;project_dir: str;push_undo: Optional[Callable[[Any], None]];regenerate_mesh_in_job: Optional[Callable[[str], None]];regenerate_meshes: Optional[Callable[[Any], Any]];register_edit_session_entry: Optional[Callable[[Any], None]];register_overlay: Optional[Callable[[Any], None]];register_prim_menu_entry: Optional[Callable[[Any], None]];release_cursor: Optional[Callable[[], None]];request_cursor: Optional[Callable[[str], None]];request_deactivate: Optional[Callable[[], None]];request_tree_refresh: Optional[Callable[[], None]];restore_camera: Optional[Callable[[Any], None]];screen_to_world: Optional[Callable[[float, float, int, int, Any], Any]];selection: list;selection_set: list;set_auxiliary_dock: Optional[Callable[[Any, str], None]];set_selection_set: Optional[Callable[[Sequence[str], Optional[str]], None]];set_tool_hints: Optional[Callable[[str], None]];show_progress: Optional[Callable[[str, Any, Any], None]];show_status: Optional[Callable[[str, int], None]];snapshot_camera: Optional[Callable[[], Any]];stage: 'Usd.Stage';stage_manager: 'StageManagerInterface';translate: Optional[Callable[[str, str], str]];unregister_overlay: Optional[Callable[[Any], None]];upsert_point_cloud_tile: Optional[Callable[[str, str, Any, Any, Any, Any], Any]];viewport: object"
+    },
+    {
+      "kind": "class",
+      "module": "core.events",
+      "name": "ToolDeactivated",
+      "signature": "class:source: str;tool_id: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.contexts",
+      "name": "ToolEvent",
+      "signature": "class:button: str;is_accepted: bool;is_auto_repeat: bool;key: str;modifiers: set;position: tuple;type: str;world_position: Optional[tuple]"
+    },
+    {
+      "kind": "class",
+      "module": "core.events",
+      "name": "ToolModeChanged",
+      "signature": "class:mode: str;source: str;tool_id: str"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "ToolResult",
+      "signature": "class:CANCELLED;FAILED;FINISHED;RUNNING"
+    },
+    {
+      "kind": "class",
+      "module": "core.ports",
+      "name": "ValidationReport",
+      "signature": "class:diagnostics: list[Diagnostic];errors;infos;is_valid: bool;validator_name: str;warnings"
+    },
+    {
+      "kind": "class",
+      "module": "core.navigation._events",
+      "name": "WayDeleted",
+      "signature": "class:way_path: str;way_uuid: int | None"
+    },
+    {
+      "kind": "def",
+      "module": "core.events",
+      "name": "subscribe",
+      "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
+    },
+    {
+      "kind": "def",
+      "module": "core.events",
+      "name": "unsubscribe",
+      "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
+    }
+  ],
+  "version": "1.0.0"
+}
