@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veer-studio-plugin-sdk"
-version = "1.0.0"
+version = "1.0.1"
 description = "Contract surface for writing Veer Studio plugins without the Veer Studio source tree"
 readme = "README.md"
 license = "Apache-2.0"
@@ -30,3 +30,10 @@ Issues = "https://github.com/veerautonomous/veer-studio-plugin-sdk/issues"
 where = ["."]
 include = ["veer_plugin_sdk*"]
 exclude = ["tests*", "docs*"]
+
+[tool.pytest.ini_options]
+# ROS Jazzy's launch_testing pytest11 hooks autoload on any workstation with
+# ROS on PYTHONPATH (the common plugin-author box), crashing collection with
+# ModuleNotFoundError before a single test runs.  Same block as
+# atlas_studio's committed pytest.ini.
+addopts = "-p no:launch_testing -p no:launch_ros"
