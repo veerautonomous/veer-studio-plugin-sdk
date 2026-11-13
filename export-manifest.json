@@ -217,5 +217,5 @@
       "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
     }
   ],
-  "version": "1.0.2"
+  "version": "1.0.3"
 }

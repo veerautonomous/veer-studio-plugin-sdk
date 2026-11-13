@@ -5,8 +5,8 @@ the Veer Studio source tree: the port ABCs, the bounded-context types, the
 event bus, and a testing toolkit (mock contexts, mock stage manager, mock USD
 stage) — everything needed to write and CI-test a plugin standalone.
 
-- **Version:** `1.0.2` — generated from Veer Studio source
-  `c80b4622cce0e888cda3f42721d08dc3cd6fab00`
+- **Version:** `1.0.3` — generated from Veer Studio source
+  `afd47a4a69fa515fa72919cfb9f0daa20fb31838`
 - **Docs:** [docs/author-guide.md](docs/author-guide.md)
 - **Issues:** report SDK problems here
   (https://github.com/veerautonomous/veer-studio-plugin-sdk/issues);
@@ -18,13 +18,13 @@ stage) — everything needed to write and CI-test a plugin standalone.
 From a release tag (recommended — the wheel is also attached to the release):
 
 ```bash
-pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.0.2"
+pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.0.3"
 ```
 
 For plugin tests that build USD stages, add the testing extra:
 
 ```bash
-pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.0.2"
+pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.0.3"
 ```
 
 ## Quickstart
@@ -68,7 +68,7 @@ See [docs/author-guide.md](docs/author-guide.md) for the full walkthrough.
 
 - It does **not** run Veer Studio, render a viewport, or ship the
   application — plugins are loadable adapters, not apps.
-- It does **not** include Veer Studio internals; the 37 exported names are
+- It does **not** include Veer Studio internals; the 36 exported names are
   the entire contract (see `export-manifest.json`).
 
 ## Versioning
@@ -78,3 +78,16 @@ was built against (`sdkVersion` — required; the host refuses a manifest that
 omits it); a major bump means the contract changed in
 a way your plugin must answer to. The export manifest in this repo is the
 machine-checkable record of the surface each release carries.
+
+## License
+
+Copyright 2026 Jim Y. Li.
+
+Licensed under the Apache License, Version 2.0 (the full text is in
+[LICENSE](LICENSE)); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0.
+
+Veer Studio itself is proprietary and is not covered by this license.
+You may develop and distribute open-source or proprietary plugins,
+subject to this license and any applicable third-party licenses.
