@@ -985,385 +985,43 @@ class StageManagerInterface(ABC):
         """
 
 
-# ---------------------------------------------------------------------------
-# Re-exports — type definitions plugins need without importing atlas_schema
-# ---------------------------------------------------------------------------
 
 
-def _lazy_import_atlas_types():
-    """Lazy-import AtlasType, PlacementMode, SpatialRepresentationType."""
-    from core.atlas_schema import AtlasType, PlacementMode, SpatialRepresentationType  # noqa: F811
-    return AtlasType, PlacementMode, SpatialRepresentationType
 
 
-def _lazy_import_site_origin():
-    """Lazy-import the SiteOrigin trio to avoid pxr at module level."""
-    from core.site_origin import (  # noqa: F811
-        SiteOrigin, is_georeferenced, read_site_origin,
-    )
-    return SiteOrigin, read_site_origin, is_georeferenced
 
 
-def _lazy_import_atlas_functions():
-    """Lazy-import is_atlas_object, is_navigable_target from atlas_schema."""
-    from core.atlas_schema import is_atlas_object, is_navigable_target  # noqa: F811
-    return is_atlas_object, is_navigable_target
 
 
-def _lazy_import_atlas_constants():
-    """Lazy-import attribute name constants from atlas_schema."""
-    from core.atlas_schema import (  # noqa: F811
-        ATTR_OBJECT_ID, ATTR_DISPLAY_NAME, ATTR_TYPE,
-        ATTR_SPATIAL_REPRESENTATION, ATTR_CATEGORY, ATTR_DESCRIPTION,
-        ATTR_TAGS, ATTR_STATE, ATTR_RELATIONSHIPS, ATTR_NAVIGABLE_TARGET,
-        ATTR_IMPORT_MODE, ATTR_SOURCE_CRS, ATTR_IMPORT_TRANSFORM,
-        ATTR_ALIGNMENT_MODE, ATTR_ALIGNMENT_TRANSFORM, ATTR_LAST_ALIGNED,
-    )
-    return (ATTR_OBJECT_ID, ATTR_DISPLAY_NAME, ATTR_TYPE,
-            ATTR_SPATIAL_REPRESENTATION, ATTR_CATEGORY, ATTR_DESCRIPTION,
-            ATTR_TAGS, ATTR_STATE, ATTR_RELATIONSHIPS, ATTR_NAVIGABLE_TARGET,
-            ATTR_IMPORT_MODE, ATTR_SOURCE_CRS, ATTR_IMPORT_TRANSFORM,
-            ATTR_ALIGNMENT_MODE, ATTR_ALIGNMENT_TRANSFORM, ATTR_LAST_ALIGNED)
 
 
-def _lazy_import_atlas_validation():
-    """Lazy-import validation, inspection, and creation functions from atlas_schema."""
-    from core.atlas_schema import (  # noqa: F811
-        get_atlas_object_id, get_atlas_type, get_atlas_attributes,
-        validate_atlas_object, validate_object_id,
-        create_atlas_prim, stamp_atlas_identity,
-        read_import_provenance,
-    )
-    return (get_atlas_object_id, get_atlas_type, get_atlas_attributes,
-            validate_atlas_object, validate_object_id,
-            create_atlas_prim, stamp_atlas_identity,
-            read_import_provenance)
 
 
-def _lazy_import_spatial_functions():
-    """Lazy-import spatial query functions from prim_utils and raycast."""
-    from core.prim_utils import get_world_center, find_point_cloud, find_all_point_clouds, find_point_cloud_frame, is_frame_prim, get_frame_origin  # noqa: F811
-    from core.raycast import (  # noqa: F811
-        get_ground_height_at, get_ground_height, get_ground_mesh_height,
-        has_ground_mesh, has_ground_mesh_at, build_ground_mesh_cache,
-        clear_ground_height_cache, intersect_ground_plane,
-    )
-    return (get_world_center, find_point_cloud, find_all_point_clouds,
-            find_point_cloud_frame, is_frame_prim, get_frame_origin,
-            get_ground_height_at, get_ground_height, get_ground_mesh_height,
-            has_ground_mesh, has_ground_mesh_at, build_ground_mesh_cache,
-            clear_ground_height_cache, intersect_ground_plane)
 
 
-def _lazy_import_assembly():
-    """Lazy-import assembly schema + stamping + registry query."""
-    from core.assembly_schema import AssemblySchema, AssemblyAttr, stamp_assembly_schema, AssemblyTerminal, TerminalDirection  # noqa: F811
-    from core.assembly_registry import (  # noqa: F811
-        find_assembly_providers_for_subtype,
-        list_all_assembly_providers,
-        register_assembly_provider,
-        clear_assembly_providers,
-    )
-    return (AssemblySchema, AssemblyAttr, stamp_assembly_schema, AssemblyTerminal, TerminalDirection,
-            find_assembly_providers_for_subtype,
-            list_all_assembly_providers,
-            register_assembly_provider, clear_assembly_providers)
 
 
-def _lazy_import_point_cloud_picker():
-    """Lazy-import the point cloud picker utility."""
-    from core.point_cloud_picker import PointCloudPicker as pcp, PickResult as pr  # noqa: F811
-    return pcp, pr
 
 
-def _lazy_import_paths():
-    """Lazy-import sanctioned path helpers from core.paths."""
-    from core import paths
-    return (
-        paths.navigation_root, paths.nav_lanelet_root, paths.nav_lines_root,
-        paths.nav_reg_elems_root, paths.nav_points_root,
-        paths.reference_root, paths.reference_roads_root,
-        paths.reference_buildings_root, paths.reference_satellite_root,
-        paths.reference_water_root, paths.reference_landuse_root,
-        paths.reference_barriers_root, paths.reference_other_root,
-        paths.assets_root, paths.site_path,
-        paths.reality_root,
-        paths.cameras_root,
-    )
 
 
-def _lazy_import_navigation():
-    """Lazy-import NodeDB and resolve_boundary_ways from core.navigation."""
-    from core.navigation._nodes import NodeDB
-    from core.navigation._schema import resolve_boundary_ways
-    return NodeDB, resolve_boundary_ways
 
 
-# These are populated on first access via __getattr__.
-_ATLAS_TYPE_ENUMS: dict = {}  # noqa: F811
-# The three site-origin names share one lazy fill; order is the cache order.
-_SITE_ORIGIN_EXPORTS = ("SiteOrigin", "read_site_origin", "is_georeferenced")
-_SITE_ORIGIN_CLASS: list = []  # fills all three _SITE_ORIGIN_EXPORTS slots
-_ATLAS_FUNCTIONS: dict = {}  # lazy-imported atlas functions
-_ATLAS_CONSTANTS: dict = {}  # lazy-imported attribute name constants
-_ATLAS_VALIDATION: dict = {}  # lazy-imported validation functions
-_SPATIAL_FUNCTIONS: dict = {}  # lazy-imported spatial functions
-_ASSEMBLY_EXPORTS: dict = {}  # lazy-imported assembly machinery
-_PICKER_EXPORTS: dict = {}  # lazy-imported point cloud picker
-_PATHS_EXPORTS: dict = {}  # lazy-imported path helpers
-_NAV_EXPORTS: dict = {}  # lazy-imported navigation domain functions
 
 
-def read_osm_nodes(file_path: str) -> dict[int, dict]:
-    """Parse an OSM file and return tagged node data.
-
-    Returns a dict mapping ``node_id → {lat, lon, tags}`` for nodes that
-    carry at least one OSM tag.  Used by the LL2 generator to find
-    regulatory element candidates (traffic signals, stop signs, crosswalks,
-    etc.) in raw OSM source data.
-
-    Args:
-        file_path: Absolute path to a ``.osm`` XML file.
-
-    Returns:
-        ``{node_id: {"lat": float, "lon": float, "tags": dict}}``
-    """
-    from osm_importer.parser import parse_osm
-    data = parse_osm(file_path)
-    result = {}
-    for node_id, node in data.nodes.items():
-        if node.tags:
-            result[node_id] = {
-                "lat": node.lat,
-                "lon": node.lon,
-                "tags": dict(node.tags),
-            }
-    return result
 
 
-def latlon_to_local_enu(lat, lon, ele=0.0, *, origin=None):
-    """WGS84 → local ENU metres (``core.coord_utils`` bridge).
-
-    ``origin`` is the :class:`SiteOrigin` anchor and is **required** —
-    ``None`` raises ``ValueError`` naming the two ways to get one
-    (build a ``SiteOrigin``, e.g. ``SiteOrigin.from_bbox``, or read the
-    stage's with ``read_site_origin``).  There is no default frame.
-    """
-    from core.coord_utils import latlon_to_local_enu as _impl
-    return _impl(lat, lon, ele, origin=origin)
 
 
-def batch_latlon_to_local_enu(nodes, *, origin=None):
-    """Project ``{id: {"lat": …, "lon": …}}`` records to local ENU metres.
-
-    Returns ``{id: (x, y, z)}``.  ``origin`` is **required** — ``None``
-    raises ``ValueError`` naming the two ways to get one (build a
-    ``SiteOrigin``, e.g. ``SiteOrigin.from_bbox``, or read the stage's
-    with ``read_site_origin``).  There is no default frame.
-    """
-    from core.coord_utils import batch_latlon_to_local_enu as _impl
-    return _impl(nodes, origin=origin)
 
 
-# --- Plugin data directory --------------------------------------------------
-def plugin_data_dir(plugin_id: str) -> str:
-    """A plugin's intermediate-file directory (``core.platform_paths`` bridge).
-
-    The sanctioned door for code that holds no context — a client module
-    like the Overpass response cache, for example — mirroring the zero-arg
-    ``ToolContext.plugin_data_dir`` / ``PanelContext.plugin_data_dir``
-    callbacks the host populates.  Resolved at call time; creates the
-    directory on demand.  See ``core.platform_paths.plugin_data_dir`` for
-    the retention contract.
-    """
-    from core.platform_paths import plugin_data_dir as _impl
-    return str(_impl(plugin_id))
 
 
-# --- Mesh re-exports ------------------------------------------------------
-# One table for everything reachable by a plain module import, so
-# __getattr__ spends a single branch on the whole surface: name ->
-# (module, attribute).  The module is imported on first access, keeping
-# this file's module-level contract Qt- and USD-free.  Names whose first
-# access must fill a sibling cache instead (the atlas/paths/nav groups
-# below) are NOT here — they resolve through their own lazy-import
-# branches.
-
-_MESH_SCHEMA_NAMES = (
-    # ground recipe
-    "ATTR_CSF_CLOTH_RESOLUTION", "ATTR_CSF_CLASS_THRESHOLD",
-    "ATTR_CSF_RIGIDITY", "ATTR_CSF_TIME_STEP",
-    "ATTR_MESH_VOXEL_SIZE", "ATTR_MESH_MAX_EDGE_LENGTH",
-    "ATTR_MESH_MAX_TRIANGLE_AREA", "ATTR_MESH_Z_THRESHOLD",
-    "ATTR_MESH_FILTER_RADIUS", "ATTR_MESH_BORDER_VERTICES",
-    "ATTR_MESH_BORDER_COUNTS",
-    # road recipe
-    "ATTR_ROAD_WIDTH", "ATTR_ROAD_SAMPLE_INTERVAL",
-    "ATTR_ROAD_Z_PERCENTILE", "ATTR_ROAD_MAX_DEVIATION",
-    "ATTR_ROAD_CENTERLINE_VERTICES", "ATTR_ROAD_CENTERLINE_COUNTS",
-    "ATTR_ROAD_CENTERLINE_WIDTHS",
-    # attribute groups
-    "GROUND_RECIPE_ATTRS", "MESH_BORDER_ATTRS", "ROAD_RECIPE_ATTRS",
-    "INTEGRATION_ENGINE_CSF", "INTEGRATION_ENGINE_ROAD",
-)
-_MESH_REGEN_NAMES = (
-    # what ctx.regenerate_meshes returns (#272 §5)
-    "MeshRegenOutcome", "STATUS_REGENERATED", "STATUS_NO_RECIPE", "STATUS_ERROR",
-)
-_MESH_PATH_NAMES = (
-    "meshes_root", "mesh_prim_path", "mesh_layer_relpath",
-    "mesh_kind_and_id", "mint_area_id",
-    "MESH_KIND_GROUND", "MESH_KIND_ROAD", "MESH_KINDS",
-    "pointclouds_root", "pointcloud_frame_path", "pointcloud_frame_index",
-)
-
-# MGRS geodesy (#389): 100 km square decoding, moved out of the PCD
-# importer so every plugin's local frame can share it (cloud_sweep's
-# corridor load path).  core.mgrs is not a tier-1 import.
-_MGRS_NAMES = (
-    "MgrsError", "normalize_grid", "parse_grid_designator",
-    "grid_origin_utm", "grid_origin_latlon", "latlon_to_grid_name",
-)
-
-# Cloud units (#390): the point-cloud domain's discovery and writing door.
-# Plugins reach it here — core.clouds is not a tier-1 import.
-_CLOUD_NAMES = (
-    "CloudUnit", "cloud_units", "unit_for_prim", "lineage_root",
-    "lineage_units", "mint_unit_name", "write_derived_cloud",
-    "promote_cloud", "role_of", "is_tile", "is_current",
-    "define_frame_ancestors",
-    "ATTR_CLOUD_ROLE", "ATTR_CLOUD_LINEAGE", "ATTR_CLOUD_CURRENT",
-    "ATTR_DERIVED_FROM", "ATTR_DERIVED_BY", "ATTR_TILE_STATUS",
-    "ATTR_DISPLAY_NAME",
-    "ROLE_PRECISE", "ROLE_APPEARANCE", "ROLE_DERIVED",
-    "CLOUD_ROLES", "GEOMETRIC_ROLES", "CUSTOM_DATA_KEY",
-)
-_DIRECT_EXPORTS: dict[str, tuple[str, str]] = {
-    # Mesh surface — schema constants, the regeneration outcome and the
-    # point-cloud path helpers (#272).
-    **{n: ("core.mesh_schema", n) for n in _MESH_SCHEMA_NAMES},
-    **{n: ("core.mesh.regenerate", n) for n in _MESH_REGEN_NAMES},
-    **{n: ("core.paths", n) for n in _MESH_PATH_NAMES},
-    # Unified event bus (Phase 0 — DDD overhaul).
-    "subscribe": ("core.events", "subscribe"),
-    "unsubscribe": ("core.events", "unsubscribe"),
-    "StreamedTileCratesCommitted": ("core.events", "StreamedTileCratesCommitted"),
-    "StreamedTileCratesDiscarded": ("core.events", "StreamedTileCratesDiscarded"),
-    "CloudUnitWritten": ("core.events", "CloudUnitWritten"),
-    # Cloud units (#390) — discovery, roles, the derived writer, promote.
-    **{n: ("core.clouds", n) for n in _CLOUD_NAMES},
-    # MGRS geodesy (#389) — the local-frame decoder, shared by every
-    # plugin that needs an MGRS square's corner.
-    **{n: ("core.mgrs", n) for n in _MGRS_NAMES},
-    # (the stage-pin door moved to ToolContext.stage_pin_exempt, gated by
-    # job ownership — sdk#1; the raw core.stage_pin.exempt never re-exports.)
-    # Undo commands (Phase 3/7B): LayerCheckpointCommand for plugin panel
-    # edits; LayerCreationCommand (#392) for a run that births layers —
-    # how a plugin (cloud_sweep) pushes creation undo without core
-    # internals.
-    "LayerCheckpointCommand": ("core.undo_commands", "LayerCheckpointCommand"),
-    "LayerCreationCommand": ("core.undo_commands", "LayerCreationCommand"),
-    # Its argument: ``LayerCreationCommand.undo(ctx)`` takes an
-    # UndoContext, so a plugin driving a birth's rollback (a retouch run
-    # that authored nothing, #389) reaches it beside the command itself.
-    "UndoContext": ("core.undo_commands", "UndoContext"),
-    # The source-mute door (#375): a run mutes its parent for the session
-    # and hands the capture to LayerCreationCommand.  Reachable here so a
-    # plugin (cloud_sweep, #389) can mute and capture without importing
-    # the core module itself.
-    "write_session_visibility": ("core.session_visibility",
-                                 "write_session_visibility"),
-    "restore_session_visibility": ("core.session_visibility",
-                                   "restore_session_visibility"),
-    # Project path portability (#352): the read-side audit and its record —
-    # a validator reports composition refs that escape the project dir.
-    "find_nonportable_refs": ("core.layer_discovery", "find_nonportable_refs"),
-    "NonPortableRef": ("core.layer_discovery", "NonPortableRef"),
-    # Reference-layer attribution (the viewport's OSM credit): the stamp
-    # every Reference-writing importer calls so provenance rides the
-    # layer file instead of being assumed by the UI.
-    "stamp_osm_attribution": ("core.attribution", "stamp_osm_attribution"),
-    # Gizmo port (transform suite): the spec/hit/delta records and the
-    # surface interface — one door for everything a tool drives the
-    # gizmo surface with.
-    "GizmoSpec": ("core.ports", "GizmoSpec"),
-    "GizmoHit": ("core.ports", "GizmoHit"),
-    "GizmoDelta": ("core.ports", "GizmoDelta"),
-    "GizmoManagerInterface": ("core.ports", "GizmoManagerInterface"),
-}
 
 
-# Lazily-filled re-export groups.  Each entry is (cache dict, export names in
-# the order the loader returns them, loader).  A group's loader runs once, on
-# the first lookup of any name in it, and fills every name of the group.
-_LAZY_EXPORT_GROUPS = (
-    (_ATLAS_TYPE_ENUMS,
-     ("AtlasType", "PlacementMode", "SpatialRepresentationType"),
-     _lazy_import_atlas_types),
-    (_ATLAS_FUNCTIONS,
-     ("is_atlas_object", "is_navigable_target"),
-     _lazy_import_atlas_functions),
-    (_SPATIAL_FUNCTIONS,
-     ("get_world_center", "find_point_cloud", "find_all_point_clouds",
-      "find_point_cloud_frame", "is_frame_prim", "get_frame_origin",
-      "get_ground_height_at", "get_ground_height", "get_ground_mesh_height",
-      "has_ground_mesh", "has_ground_mesh_at", "build_ground_mesh_cache",
-      "clear_ground_height_cache", "intersect_ground_plane"),
-     _lazy_import_spatial_functions),
-    # Atlas attribute name constants: ATTR_OBJECT_ID, ATTR_TYPE, etc.
-    (_ATLAS_CONSTANTS,
-     ("ATTR_OBJECT_ID", "ATTR_DISPLAY_NAME", "ATTR_TYPE",
-      "ATTR_SPATIAL_REPRESENTATION", "ATTR_CATEGORY", "ATTR_DESCRIPTION",
-      "ATTR_TAGS", "ATTR_STATE", "ATTR_RELATIONSHIPS", "ATTR_NAVIGABLE_TARGET",
-      "ATTR_IMPORT_MODE", "ATTR_SOURCE_CRS", "ATTR_IMPORT_TRANSFORM",
-      "ATTR_ALIGNMENT_MODE", "ATTR_ALIGNMENT_TRANSFORM", "ATTR_LAST_ALIGNED"),
-     _lazy_import_atlas_constants),
-    # Atlas validation / inspection / creation functions.
-    (_ATLAS_VALIDATION,
-     ("get_atlas_object_id", "get_atlas_type", "get_atlas_attributes",
-      "validate_atlas_object", "validate_object_id",
-      "create_atlas_prim", "stamp_atlas_identity",
-      "read_import_provenance"),
-     _lazy_import_atlas_validation),
-    # Assembly machinery (Phase 1A): schema descriptor, stamping helper, registry query.
-    (_ASSEMBLY_EXPORTS,
-     ("AssemblySchema", "AssemblyAttr", "stamp_assembly_schema",
-      "AssemblyTerminal", "TerminalDirection",
-      "find_assembly_providers_for_subtype", "list_all_assembly_providers",
-      "register_assembly_provider", "clear_assembly_providers"),
-     _lazy_import_assembly),
-    # Point cloud picker (Phase N — interactive cloud selection).
-    (_PICKER_EXPORTS,
-     ("PointCloudPicker", "PickResult"),
-     _lazy_import_point_cloud_picker),
-    # Sanctioned core.paths helpers (plugins need prim path constructors).
-    (_PATHS_EXPORTS,
-     ("navigation_root", "nav_lanelet_root", "nav_lines_root",
-      "nav_reg_elems_root", "nav_points_root",
-      "reference_root", "reference_roads_root", "reference_buildings_root",
-      "reference_satellite_root", "reference_water_root",
-      "reference_landuse_root", "reference_barriers_root",
-      "reference_other_root", "assets_root", "site_path",
-      "reality_root", "cameras_root"),
-     _lazy_import_paths),
-    # Navigation domain (NodeDB, resolve_boundary_ways).
-    (_NAV_EXPORTS,
-     ("NodeDB", "resolve_boundary_ways"),
-     _lazy_import_navigation),
-)
-
-_LAZY_EXPORT_INDEX = {
-    name: group
-    for group in _LAZY_EXPORT_GROUPS
-    for name in group[1]
-}
 
 
-def _site_origin_export(name: str):
-    """``SiteOrigin``, ``read_site_origin`` and ``is_georeferenced`` share one cache."""
-    if not _SITE_ORIGIN_CLASS:
-        _SITE_ORIGIN_CLASS.extend(_lazy_import_site_origin())
-    return _SITE_ORIGIN_CLASS[_SITE_ORIGIN_EXPORTS.index(name)]
+
 
 
 

@@ -255,8 +255,8 @@ anchor them.
 | react to edits | `subscribe()` for `WayDeleted`, `NodesPruned`, `LaneletCommitted`, `LaneletDeleted`, `RegulatoryElementDeleted`, `AreaCreated`, `LiftSessionStarted` / `LiftSessionEnded` |
 | author or remove content | `ctx.edit_target_scope(<nav layer>)` + stage writes; `stage_manager.delete_prim(...)` for deletion |
 | declare the right to write | `permissions.write: {"Navigation": "..."}` |
-| import OSM source data | an `IFileImporter` with `destination_category() -> "Navigation"`; `read_osm_nodes()` pre-parses candidate nodes |
-| place geo coordinates | `latlon_to_local_enu(..., origin=ctx.stage_manager.read_site_origin())` — the origin is required; a project without one raises |
+| import OSM source data | an `IFileImporter` with `destination_category() -> "Navigation"` |
+| place geo coordinates | `ctx.latlon_to_local_enu(lat, lon, origin=ctx.stage_manager.read_site_origin())` — the origin is required; a project without one raises |
 | gate quality before export | an `IValidator` returning a `ValidationReport` |
 
 ### Reality — the captured world
@@ -279,7 +279,7 @@ beside the clouds.
 | query the ground | `ctx.get_ground_height`, `ctx.has_ground_mesh`, `ctx.build_ground_mesh_cache` |
 | rebuild a mesh | `ctx.regenerate_meshes(...)` / `ctx.regenerate_mesh_in_job(...)` |
 | find cloud prims | `stage_manager.find_point_cloud()`, `stage_manager.find_all_point_clouds()` |
-| geo-reference the data | `stage_manager.read_site_origin()` + `latlon_to_local_enu(...)` |
+| geo-reference the data | `stage_manager.read_site_origin()` + `ctx.latlon_to_local_enu(...)` |
 | declare write rights | `permissions.write: {"Reality/PointClouds": "..."}` |
 
 ### Reference and Cameras

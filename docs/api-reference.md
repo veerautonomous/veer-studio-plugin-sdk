@@ -1559,38 +1559,15 @@ for internal use).
 Reachable as `from veer_plugin_sdk import ...` (supporting tier — not in
 the 43-name manifest, but shipped and versioned with it).
 
-> **Four of these are host bridges.**  `latlon_to_local_enu`,
-> `batch_latlon_to_local_enu`, `plugin_data_dir` and `read_osm_nodes`
-> import anywhere but resolve their implementation from the host (or its
-> bundled third-party modules) **at call time**: inside Veer Studio they
-> work; in standalone test code they raise `ModuleNotFoundError`.  The
-> remaining helpers below (`parse_permission_block`, `matrix_to_list`,
-> the role constants) are pure and run everywhere.  The bridge behaviour
-> is a known gap —
-> [veer-studio-plugin-sdk#2](http://gitea.local/veer/veer-studio-plugin-sdk/issues/2).
-
-```python
-def latlon_to_local_enu(lat, lon, ele=0.0, *, origin) -> (x, y, z)   # host bridge
-def batch_latlon_to_local_enu(nodes, *, origin) -> {id: (x, y, z)}   # host bridge
-```
-WGS84 → local ENU metres.  `origin` (a `SiteOrigin`) is **required** —
-`None` raises `ValueError` naming the two ways to get one (build one, e.g.
-`SiteOrigin.from_bbox`, or read the stage's via `read_site_origin()`).
-There is no default projection frame.  *nodes* is
-`{id: {"lat": …, "lon": …}}`.
-
-```python
-def plugin_data_dir(plugin_id: str) -> str                # host bridge
-```
-A plugin's intermediate-file directory for code holding no context (a
-client module, a cache).  Mirrors the zero-arg `ctx.plugin_data_dir`
-callback; resolved at call time, created on demand.
-
-```python
-def read_osm_nodes(file_path: str) -> dict[int, dict]     # host bridge
-```
-Parse an OSM XML file → `{node_id: {"lat", "lon", "tags"}}` for nodes
-carrying at least one tag (regulatory-element candidates in raw OSM data).
+> **Where did `latlon_to_local_enu` / `plugin_data_dir` go?**  They — and
+> `read_osm_nodes` / `batch_latlon_to_local_enu` — were briefly importable
+> from the package as module-level functions, but their implementations
+> live in the host and they only ever raised `ModuleNotFoundError` outside
+> it; they were excised from the SDK surface
+> ([veer-studio-plugin-sdk#2](http://gitea.local/veer/veer-studio-plugin-sdk/issues/2)).
+> The sanctioned doors are the **context callbacks**: `ctx.latlon_to_local_enu(...)`
+> and `ctx.plugin_data_dir()` — documented with
+> [ToolContext](#toolcontext) — which you inject in tests.
 
 ```python
 def parse_permission_block(name: str, raw) -> tuple[dict, dict]
@@ -1762,8 +1739,7 @@ behaviour.
 
 **Errors:** `LayerPermissionError`, `DraftSessionDirtyError`
 
-**Helpers:** `latlon_to_local_enu`, `batch_latlon_to_local_enu`,
-`plugin_data_dir`, `read_osm_nodes`, `matrix_to_list`,
+**Helpers:** `parse_permission_block`, `matrix_to_list`,
 `ROLE_PRECISE`, `ROLE_APPEARANCE`, `ROLE_DERIVED`, `CLOUD_ROLES`
 
 If a name you need is in neither list, it is not part of the contract —
