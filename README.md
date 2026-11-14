@@ -7,7 +7,8 @@ stage) — everything needed to write and CI-test a plugin standalone.
 
 - **Version:** `1.2.0` — generated from Veer Studio source
   `c28b219de32bb2d3a7be6589431eef12c5495af5`
-- **Docs:** [docs/author-guide.md](docs/author-guide.md)
+- **Docs:** [author guide](docs/author-guide.md) (walkthrough) ·
+  [API reference](docs/api-reference.md) (classes, methods, data structures)
 - **Issues:** report SDK problems here
   (https://github.com/veerautonomous/veer-studio-plugin-sdk/issues);
   Veer Studio product issues go to
@@ -40,14 +41,19 @@ class MyTool(IToolProvider):
     def display_name(self) -> str:
         return "My Tool"
 
+    @classmethod
+    def poll(cls, ctx: ToolContext) -> bool:
+        return True
+
+    def execute(self, ctx: ToolContext) -> ToolResult:
+        ...
+        return ToolResult.FINISHED
+
     def activate(self, ctx: ToolContext) -> None:
         ...
 
-    def deactivate(self) -> None:
+    def deactivate(self, ctx: ToolContext) -> None:
         ...
-
-    def poll(self) -> bool:
-        return True
 ```
 
 Test it without Veer Studio:
@@ -62,14 +68,17 @@ def test_activate():
 ```
 
 Run your tests the same way CI does: `python -m pytest tests/ -q`.
-See [docs/author-guide.md](docs/author-guide.md) for the full walkthrough.
+See the [author guide](docs/author-guide.md) for the full walkthrough and
+the [API reference](docs/api-reference.md) for every class and method.
 
 ## What this package is not
 
 - It does **not** run Veer Studio, render a viewport, or ship the
   application — plugins are loadable adapters, not apps.
-- It does **not** include Veer Studio internals; the 43 exported names are
-  the entire contract (see `export-manifest.json`).
+- It does **not** include Veer Studio internals; the contract is the 43
+  names in `export-manifest.json`, plus the supporting types their
+  signatures reference (both documented in the
+  [API reference](docs/api-reference.md#8-exported-name-index)).
 
 ## Versioning
 
