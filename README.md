@@ -5,8 +5,8 @@ the Veer Studio source tree: the port ABCs, the bounded-context types, the
 event bus, and a testing toolkit (mock contexts, mock stage manager, mock USD
 stage) — everything needed to write and CI-test a plugin standalone.
 
-- **Version:** `1.1.0` — generated from Veer Studio source
-  `beb96dda352aaa67cba9dbd64aa9053e49857a0d`
+- **Version:** `1.2.0` — generated from Veer Studio source
+  `c28b219de32bb2d3a7be6589431eef12c5495af5`
 - **Docs:** [docs/author-guide.md](docs/author-guide.md)
 - **Issues:** report SDK problems here
   (https://github.com/veerautonomous/veer-studio-plugin-sdk/issues);
@@ -18,13 +18,13 @@ stage) — everything needed to write and CI-test a plugin standalone.
 From a release tag (recommended — the wheel is also attached to the release):
 
 ```bash
-pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.1.0"
+pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.2.0"
 ```
 
 For plugin tests that build USD stages, add the testing extra:
 
 ```bash
-pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.1.0"
+pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.2.0"
 ```
 
 ## Quickstart

@@ -812,6 +812,11 @@ class JobSpec:
     name: str = ""
     """Display name shown in the status-bar job progress."""
 
+    plugin_id: str = ""
+    """The driving plugin's id — the pin this job takes names it as the only
+    ``plugin_id`` ``ToolContext.stage_pin_exempt()`` lets through while the
+    job runs (stage_pin, sdk#1).  Empty for host-owned jobs."""
+
     env: Optional[dict] = None
     """Extra environment variables layered over the inherited env."""
 

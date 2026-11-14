@@ -419,6 +419,25 @@ class ToolContext:
                 "no draft session is active — open a project first")
         return draft
 
+    # -- Stage pin door (sdk#1, owner ruling 2026-11-14) --------------------
+    def stage_pin_exempt(self):
+        """The pin's one door: this context's authoring while a job holds it.
+
+        Returns a context manager.  With no pin in force it is a no-op
+        yield — there is nothing to bypass.  While a background job runs
+        (:mod:`core.stage_pin`, wayfinder #322), it yields only when this
+        context's ``plugin_id`` is the job's owner (``JobSpec.plugin_id``);
+        anyone else gets ``StagePinnedError`` naming the holder.
+
+        The gate is ownership, not a declared permission: the key exists
+        only while *your own* job runs, so a plugin can never open the
+        lock on someone else's write.  This method replaces the old
+        module-level ``core.contexts.stage_pin_exempt`` re-export, which
+        handed the raw door to every caller.
+        """
+        from core import stage_pin
+        return stage_pin.exempt_for(getattr(self, 'plugin_id', '') or '')
+
 
 @dataclass
 class PanelContext:
@@ -1236,9 +1255,8 @@ _DIRECT_EXPORTS: dict[str, tuple[str, str]] = {
     # MGRS geodesy (#389) — the local-frame decoder, shared by every
     # plugin that needs an MGRS square's corner.
     **{n: ("core.mgrs", n) for n in _MGRS_NAMES},
-    # Stage pin (#322): a background job's own authoring runs inside this
-    # block while the pin refuses everyone else (#385).
-    "stage_pin_exempt": ("core.stage_pin", "exempt"),
+    # (the stage-pin door moved to ToolContext.stage_pin_exempt, gated by
+    # job ownership — sdk#1; the raw core.stage_pin.exempt never re-exports.)
     # Undo commands (Phase 3/7B): LayerCheckpointCommand for plugin panel
     # edits; LayerCreationCommand (#392) for a run that births layers —
     # how a plugin (cloud_sweep) pushes creation undo without core
