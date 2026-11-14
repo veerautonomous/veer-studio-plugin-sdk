@@ -306,6 +306,23 @@ class PluginMeta:
 
 
 # ---------------------------------------------------------------------------
+# Cloud role vocabulary — the point-cloud domain's role names
+# ---------------------------------------------------------------------------
+
+# Static definitions, not a lazy re-export: they have to ship inside the
+# SDK's standalone ``_ports.py`` copy, which gets no ``__getattr__``
+# dispatcher.  ``core.clouds._schema`` re-imports them, so
+# ``from core.clouds import GEOMETRIC_ROLES`` keeps working.
+
+ROLE_PRECISE = "precise"
+ROLE_APPEARANCE = "appearance"
+ROLE_DERIVED = "derived"
+CLOUD_ROLES = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
+# The roles that may feed a geometric derivation (mesh generation, snapping).
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)
+
+
+# ---------------------------------------------------------------------------
 # ToolResult enum
 # ---------------------------------------------------------------------------
 

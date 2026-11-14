@@ -12,7 +12,7 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The full list — 36 names — is `export-manifest.json` in this repo, and
+The full list — 43 names — is `export-manifest.json` in this repo, and
 `tests/test_surface.py` asserts it. If a name you need is not there, it is
 not part of the contract; ask for it in the SDK issue tracker rather than
 importing around it.
@@ -21,9 +21,9 @@ Three groups:
 
 | Group | Names | What they are |
 |---|---|---|
-| Ports (16) | `IToolProvider`, `IFileImporter`, `IValidator`, … | The ABCs your plugin classes implement |
+| Ports (21) | `IToolProvider`, `IFileImporter`, `IValidator`, … | The ABCs your plugin classes implement |
 | Contexts (6) | `ToolContext`, `PanelContext`, `StageManagerInterface`, … | The capabilities the host hands you at runtime |
-| Events (15) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
+| Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
 
 ## Implementing a plugin
 

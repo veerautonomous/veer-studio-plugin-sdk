@@ -94,6 +94,28 @@ class ToolContext:
     # ``None`` when no ground mesh covers the point — no four-pass fallback.
     get_ground_mesh_height: Optional[Callable[[float, float], Optional[float]]] = None
 
+    # Stage-level ground-mesh poll: ``() -> bool`` — is there any ground mesh
+    # at all?  The free function takes a stage; this is bound to this
+    # context's, so a tool asks ``ctx.has_ground_mesh()`` instead of
+    # threading ``ctx.stage`` through it.
+    has_ground_mesh: Optional[Callable[[], bool]] = None
+
+    # Build the combined ground-mesh cache for this stage:
+    # ``() -> dict | None``.  The KD-tree index a tool builds once per
+    # GroundSurface rather than re-scanning the mesh every query.
+    build_ground_mesh_cache: Optional[Callable[[], Optional[dict]]] = None
+
+    # Cloud-unit discovery over this stage:
+    # ``(roles=None, current_only=False) -> list[CloudUnit]``.  *roles* takes
+    # role-name strings — pass ``GEOMETRIC_ROLES`` (from ``core.ports``) to
+    # keep only the clouds a geometric derivation may read.
+    cloud_units: Optional[Callable[..., list]] = None
+
+    # WGS84 → local ENU over this stage: ``(lat, lon, ele=0.0, *, origin)
+    # -> (x, y, z)``.  ``origin`` is a required :class:`SiteOrigin` — ``None``
+    # raises ``ValueError``.  There is no default projection frame.
+    latlon_to_local_enu: Optional[Callable[..., tuple]] = None
+
     # Spatial query callbacks (populated by the framework)
     find_nearest_prim: Optional[Callable[[float, float, float], Optional[str]]] = None
     """Find the nearest prim to a world position: ``(x, y, z) -> prim_path_str | None``."""
@@ -956,9 +978,11 @@ def _lazy_import_atlas_types():
 
 
 def _lazy_import_site_origin():
-    """Lazy-import SiteOrigin + read_site_origin to avoid pxr at module level."""
-    from core.site_origin import SiteOrigin, read_site_origin  # noqa: F811
-    return SiteOrigin, read_site_origin
+    """Lazy-import the SiteOrigin trio to avoid pxr at module level."""
+    from core.site_origin import (  # noqa: F811
+        SiteOrigin, is_georeferenced, read_site_origin,
+    )
+    return SiteOrigin, read_site_origin, is_georeferenced
 
 
 def _lazy_import_atlas_functions():
@@ -1058,7 +1082,9 @@ def _lazy_import_navigation():
 
 # These are populated on first access via __getattr__.
 _ATLAS_TYPE_ENUMS: dict = {}  # noqa: F811
-_SITE_ORIGIN_CLASS: list = []  # sentinel wrapper (single-item list)
+# The three site-origin names share one lazy fill; order is the cache order.
+_SITE_ORIGIN_EXPORTS = ("SiteOrigin", "read_site_origin", "is_georeferenced")
+_SITE_ORIGIN_CLASS: list = []  # fills all three _SITE_ORIGIN_EXPORTS slots
 _ATLAS_FUNCTIONS: dict = {}  # lazy-imported atlas functions
 _ATLAS_CONSTANTS: dict = {}  # lazy-imported attribute name constants
 _ATLAS_VALIDATION: dict = {}  # lazy-imported validation functions
@@ -1099,8 +1125,10 @@ def read_osm_nodes(file_path: str) -> dict[int, dict]:
 def latlon_to_local_enu(lat, lon, ele=0.0, *, origin=None):
     """WGS84 → local ENU metres (``core.coord_utils`` bridge).
 
-    ``origin`` is the optional :class:`SiteOrigin` anchor; without one the
-    projection falls back to the legacy UTM 54N behaviour.
+    ``origin`` is the :class:`SiteOrigin` anchor and is **required** —
+    ``None`` raises ``ValueError`` naming the two ways to get one
+    (build a ``SiteOrigin``, e.g. ``SiteOrigin.from_bbox``, or read the
+    stage's with ``read_site_origin``).  There is no default frame.
     """
     from core.coord_utils import latlon_to_local_enu as _impl
     return _impl(lat, lon, ele, origin=origin)
@@ -1109,8 +1137,10 @@ def latlon_to_local_enu(lat, lon, ele=0.0, *, origin=None):
 def batch_latlon_to_local_enu(nodes, *, origin=None):
     """Project ``{id: {"lat": …, "lon": …}}`` records to local ENU metres.
 
-    Returns ``{id: (x, y, z)}``; without an ``origin`` anchor the projection
-    falls back to the legacy UTM 54N behaviour.
+    Returns ``{id: (x, y, z)}``.  ``origin`` is **required** — ``None``
+    raises ``ValueError`` naming the two ways to get one (build a
+    ``SiteOrigin``, e.g. ``SiteOrigin.from_bbox``, or read the stage's
+    with ``read_site_origin``).  There is no default frame.
     """
     from core.coord_utils import batch_latlon_to_local_enu as _impl
     return _impl(nodes, origin=origin)
@@ -1312,14 +1342,10 @@ _LAZY_EXPORT_INDEX = {
 
 
 def _site_origin_export(name: str):
-    """``SiteOrigin`` and ``read_site_origin`` share one two-slot list cache."""
-    if name == "SiteOrigin":
-        if not _SITE_ORIGIN_CLASS:
-            _SITE_ORIGIN_CLASS.extend(_lazy_import_site_origin())
-        return _SITE_ORIGIN_CLASS[0]
-    if len(_SITE_ORIGIN_CLASS) < 2:
+    """``SiteOrigin``, ``read_site_origin`` and ``is_georeferenced`` share one cache."""
+    if not _SITE_ORIGIN_CLASS:
         _SITE_ORIGIN_CLASS.extend(_lazy_import_site_origin())
-    return _SITE_ORIGIN_CLASS[1]
+    return _SITE_ORIGIN_CLASS[_SITE_ORIGIN_EXPORTS.index(name)]
 
 
 

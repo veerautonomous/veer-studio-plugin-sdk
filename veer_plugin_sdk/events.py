@@ -9,6 +9,7 @@ try:
         ToolDeactivated,
         ToolModeChanged,
         SublayersRewired,
+        StreamedTileCratesCommitted,
         subscribe,
         unsubscribe,
     )
@@ -31,6 +32,7 @@ except ModuleNotFoundError as _exc:
         ToolDeactivated,
         ToolModeChanged,
         SublayersRewired,
+        StreamedTileCratesCommitted,
         subscribe,
         unsubscribe,
         WayDeleted,
@@ -49,6 +51,7 @@ __all__ = [
     'ToolDeactivated',
     'ToolModeChanged',
     'SublayersRewired',
+    'StreamedTileCratesCommitted',
     'subscribe',
     'unsubscribe',
     'WayDeleted',

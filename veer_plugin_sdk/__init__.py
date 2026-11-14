@@ -23,6 +23,7 @@ from veer_plugin_sdk.events import (
     ToolDeactivated,
     ToolModeChanged,
     SublayersRewired,
+    StreamedTileCratesCommitted,
     subscribe,
     unsubscribe,
     WayDeleted,
@@ -36,8 +37,12 @@ from veer_plugin_sdk.events import (
 )
 
 __all__ = [
+    'BaseOverlayRenderer',
+    'CreationSession',
+    'CreationVerb',
     'Diagnostic',
     'ExportReport',
+    'GEOMETRIC_ROLES',
     'IExporter',
     'IFileImporter',
     'IFusionPlugin',
@@ -47,6 +52,8 @@ __all__ = [
     'IStageContributor',
     'IToolProvider',
     'IValidator',
+    'JobSpec',
+    'OverlayLayer',
     'PluginMeta',
     'Severity',
     'ToolResult',
@@ -62,6 +69,7 @@ __all__ = [
     'ToolDeactivated',
     'ToolModeChanged',
     'SublayersRewired',
+    'StreamedTileCratesCommitted',
     'subscribe',
     'unsubscribe',
     'WayDeleted',

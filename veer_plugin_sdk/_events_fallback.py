@@ -56,6 +56,16 @@ class SublayersRewired(DomainEvent):
     chips) is stale until it rebuilds."""
     detail: str
 
+@dataclass(frozen=True, kw_only=True)
+class StreamedTileCratesCommitted(DomainEvent):
+    """A Save copied streamed tile crates into the project (#352).
+
+    *source_paths* are the producer-side crates the Save read.  The project
+    holds its own copies from here on, so a producer may release its cache
+    copies.  Fired after the merge commits; a discarded or crashed session
+    fires nothing, so the producer keeps its crates for a retry."""
+    source_paths: tuple[str, ...]
+
 _subscribers: list[Callable[[DomainEvent], None]] = []
 
 def subscribe(callback: Callable[[DomainEvent], None]) -> None:

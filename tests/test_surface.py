@@ -13,8 +13,12 @@ import veer_plugin_sdk
 
 
 PORTS = [
+    "BaseOverlayRenderer",
+    "CreationSession",
+    "CreationVerb",
     "Diagnostic",
     "ExportReport",
+    "GEOMETRIC_ROLES",
     "IExporter",
     "IFileImporter",
     "IFusionPlugin",
@@ -24,6 +28,8 @@ PORTS = [
     "IStageContributor",
     "IToolProvider",
     "IValidator",
+    "JobSpec",
+    "OverlayLayer",
     "PluginMeta",
     "Severity",
     "ToolResult",
@@ -43,6 +49,7 @@ EVENTS = [
     "ToolDeactivated",
     "ToolModeChanged",
     "SublayersRewired",
+    "StreamedTileCratesCommitted",
     "subscribe",
     "unsubscribe",
     "WayDeleted",
