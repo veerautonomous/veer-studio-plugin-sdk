@@ -212,6 +212,87 @@ The registry methods available inside `register()`:
 
 ---
 
+## The map model
+
+Every project is a small set of layer categories.  The host keys
+composition order, draft ownership, and your `permissions.write` off this
+taxonomy — hold it in mind while choosing a port:
+
+| Category | Holds | |
+|---|---|---|
+| `Navigation` | the road network — ways, lanelets, **regulatory elements**, points | major layer |
+| `Reality/PointClouds`, `Reality/ColorFields`, `Reality/Meshes` | the captured world — point clouds, photo colour, ground/road meshes | major layer |
+| `Reference`, `Reference/Satellite` | OSM reference data and satellite imagery | major layer |
+| `Cameras` | saved viewpoints | support |
+| `Assets` | placed objects | support |
+
+Domain depth — schemas, authoring workflows, the operator's view — lives
+in the [Veer Studio manual](https://www.veerautonomous.com/manual/)
+(start with
+[Projects and layers](https://www.veerautonomous.com/manual/tasks/projects-and-layers/)).
+This guide stays at the SDK's abstraction level: **the doors you call,
+not what is under them.**
+
+> **Atlas** is a planned *post-1.0* fourth major map layer — not shipped
+> in 1.x.  A few contract names anticipate it (`is_atlas_object`,
+> `create_atlas_prim`, the `"atlas"` section band).  They are stable API,
+> but do not build current workflows on them, and never model navigation
+> content with them.
+
+### Navigation — the road network
+
+Deep dive in the manual:
+[lanelet roads](https://www.veerautonomous.com/manual/tasks/lanelet-roads/) ·
+[regulatory elements](https://www.veerautonomous.com/manual/tasks/regulatory-elements/).
+
+The layer holds ways (geometry), lanelets (roads), **regulatory
+elements** — a traffic light, stop line, or crosswalk is a *regulatory
+element* in this layer, never an Atlas object — and the points that
+anchor them.
+
+| You want to | Call |
+|---|---|
+| react to edits | `subscribe()` for `WayDeleted`, `NodesPruned`, `LaneletCommitted`, `LaneletDeleted`, `RegulatoryElementDeleted`, `AreaCreated`, `LiftSessionStarted` / `LiftSessionEnded` |
+| author or remove content | `ctx.edit_target_scope(<nav layer>)` + stage writes; `stage_manager.delete_prim(...)` for deletion |
+| declare the right to write | `permissions.write: {"Navigation": "..."}` |
+| import OSM source data | an `IFileImporter` with `destination_category() -> "Navigation"`; `read_osm_nodes()` pre-parses candidate nodes |
+| place geo coordinates | `latlon_to_local_enu(..., origin=ctx.stage_manager.read_site_origin())` — the origin is required; a project without one raises |
+| gate quality before export | an `IValidator` returning a `ValidationReport` |
+
+### Reality — the captured world
+
+Deep dive in the manual:
+[point clouds](https://www.veerautonomous.com/manual/tasks/point-clouds/) ·
+[ground mesh](https://www.veerautonomous.com/manual/tasks/ground-mesh/).
+
+The layer's unit of currency is the **cloud unit**: each carries a
+*role* — `precise`, `appearance`, or `derived` (`GEOMETRIC_ROLES` is
+what geometric derivations may read) — plus lineage (which unit derived
+from which, which is current).  Colour fields and surface meshes sit
+beside the clouds.
+
+| You want to | Call |
+|---|---|
+| discover clouds on the stage | `ctx.cloud_units(roles=GEOMETRIC_ROLES)` |
+| stream tiles as you produce them | `ctx.upsert_point_cloud_tile(...)` |
+| finish or abandon a run | `ctx.consolidate_point_cloud_run(...)` / `ctx.discard_point_cloud_run(...)` |
+| query the ground | `ctx.get_ground_height`, `ctx.has_ground_mesh`, `ctx.build_ground_mesh_cache` |
+| rebuild a mesh | `ctx.regenerate_meshes(...)` / `ctx.regenerate_mesh_in_job(...)` |
+| find cloud prims | `stage_manager.find_point_cloud()`, `stage_manager.find_all_point_clouds()` |
+| geo-reference the data | `stage_manager.read_site_origin()` + `latlon_to_local_enu(...)` |
+| declare write rights | `permissions.write: {"Reality/PointClouds": "..."}` |
+
+### Reference and Cameras
+
+Reference is the backdrop (OSM, satellite) — see
+[reference base map](https://www.veerautonomous.com/manual/tasks/reference-base-map/).
+A reference-writing importer declares
+`destination_category() -> "Reference"` and is read-only for everything
+else unless its permissions say otherwise.  `Cameras` holds viewpoints —
+rarely a plugin's concern.
+
+---
+
 ## Choosing a port
 
 | You want to… | Implement | Minimal surface |

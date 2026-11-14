@@ -503,7 +503,8 @@ SECTION_DOMAINS = frozenset({"navigation", "reality", "reference",
                              "atlas", "host"})
 ```
 The band a section renders in.  `host` is reserved; a plugin declaring it
-still lands in the domain band and the host logs a warning.
+still lands in the domain band and the host logs a warning.  `atlas` is
+reserved for the planned post-1.0 Atlas layer (not shipped).
 
 ### FieldSpec
 
@@ -811,8 +812,13 @@ def has_ground_mesh(self) -> bool
 def read_site_origin(self)                            # SiteOrigin | None
 def create_atlas_prim(self, atlas_type_name: str, position, **kwargs) -> str
 ```
-Create an Atlas object (e.g. `"TRAFFIC_LIGHT"`) at *position*
-(`Gf.Vec3d`); returns the new `Sdf.Path` string.
+Create a prim in the Atlas object-identity system at *position*
+(`Gf.Vec3d`); returns the new `Sdf.Path` string.  **Atlas is a planned
+post-1.0 map layer and has not shipped** — new plugins should author
+current map content through its own layer's doors instead.  In particular,
+do not model navigation content with this: regulatory elements (traffic
+lights, stop lines, crosswalks) live in `Navigation` and carry no Atlas
+identity.
 
 ```python
 def notify_prims_modified(self, prim_paths: list[str]) -> None
@@ -1033,7 +1039,7 @@ creation-session hooks.
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
 | `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds |
 
-### Atlas helpers
+### Identity and navigation queries
 
 ```python
 is_atlas_object   : (prim_path) -> bool
@@ -1042,6 +1048,12 @@ get_atlas_object_id: (prim_path) -> str | None
 is_navigable_target: (prim_path) -> bool
 get_assembly_terminals: (prim_path) -> list[AssemblyTerminal] | None
 ```
+
+The `is_atlas_*` / `get_atlas_*` names anticipate the **Atlas** layer — a
+planned post-1.0 fourth map layer that has not shipped.  They are
+contract-stable API, but not a current workflow: don't build 1.x features
+on them.  `is_navigable_target` and `get_assembly_terminals` are the
+Navigation-facing queries of this group.
 
 ### Import & point-cloud doors
 
@@ -1271,7 +1283,7 @@ mutation.
 | `triggering_prim_path` | `str` | the mutated prim |
 | `originator_id` | `str` | `fusion_id` of whatever triggered this ("" = user).  **Check against your own id first** to break write→notify→write loops |
 | `get_ground_height` / `find_nearest_prim` / `find_prims_in_radius` | callbacks | same shapes as ToolContext |
-| `is_atlas_object` / `is_navigable_target` | callbacks | atlas helpers |
+| `is_atlas_object` / `is_navigable_target` | callbacks | identity/navigation queries (Atlas naming is forward-looking — see [Identity and navigation queries](#identity-and-navigation-queries)) |
 | `translate` | `Optional[Callable]` | i18n |
 
 Plus the same `edit_target_scope(layer_path)` method as `ToolContext`
