@@ -19,15 +19,16 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The stability contract is 44 names — the list in `export-manifest.json`,
+The stability contract is 56 names — the list in `export-manifest.json`,
 asserted by `tests/test_surface.py`, exactly matching
-`veer_plugin_sdk.__all__`.  Three groups:
+`veer_plugin_sdk.__all__`.  Four groups:
 
 | Group | Names | What they are |
 |---|---|---|
 | Ports (22) | `IToolProvider`, `IFileImporter`, `CloudUnit`, … | The ABCs your plugin classes implement — plus `CloudUnit`, the record `ctx.cloud_units()` returns |
 | Contexts (6) | `ToolContext`, `PanelContext`, `StageManagerInterface`, … | The capabilities the host hands you at runtime |
 | Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
+| Paths (12) | `reference_roads_root`, `assets_root`, … | The standard project prim roots — never hardcode a site path |
 
 The package additionally ships *supporting types* the contract's own
 signatures refer to — `GizmoSpec`, `JobServiceInterface`, `FieldSpec`,
@@ -288,8 +289,10 @@ Reference is the backdrop (OSM, satellite) — see
 [reference base map](https://www.veerautonomous.com/manual/tasks/reference-base-map/).
 A reference-writing importer declares
 `destination_category() -> "Reference"` and is read-only for everything
-else unless its permissions say otherwise.  `Cameras` holds viewpoints —
-rarely a plugin's concern.
+else unless its permissions say otherwise.  To *read* reference prims —
+road centerlines for heading, say — take the root from the contract:
+`from veer_plugin_sdk import reference_roads_root`, never `core.paths`.
+`Cameras` holds viewpoints — rarely a plugin's concern.
 
 ---
 

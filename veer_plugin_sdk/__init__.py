@@ -36,6 +36,21 @@ from veer_plugin_sdk.events import (
     LiftSessionEnded,
 )
 
+from veer_plugin_sdk.paths import (
+    assets_root,
+    cameras_root,
+    navigation_root,
+    reality_root,
+    reference_barriers_root,
+    reference_buildings_root,
+    reference_landuse_root,
+    reference_other_root,
+    reference_root,
+    reference_roads_root,
+    reference_satellite_root,
+    reference_water_root,
+)
+
 __all__ = [
     'BaseOverlayRenderer',
     'CloudUnit',
@@ -81,4 +96,16 @@ __all__ = [
     'AreaCreated',
     'LiftSessionStarted',
     'LiftSessionEnded',
+    'assets_root',
+    'cameras_root',
+    'navigation_root',
+    'reality_root',
+    'reference_barriers_root',
+    'reference_buildings_root',
+    'reference_landuse_root',
+    'reference_other_root',
+    'reference_root',
+    'reference_roads_root',
+    'reference_satellite_root',
+    'reference_water_root',
 ]

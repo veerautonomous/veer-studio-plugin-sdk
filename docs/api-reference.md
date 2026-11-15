@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 44 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 56 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -685,7 +685,8 @@ def prim_path_prefix(self) -> str                      # default: core.paths.ass
 `get_terminals()` returns the terminal/pin manifest (Lanelet2 role → USD
 relationship, direction, multiplicity, accepted types).  `prim_path_prefix`
 names where instances live; **the default imports `core.paths`, which only
-exists inside the host — override it in code you unit-test standalone.**
+exists inside the host — override it in code you unit-test standalone;
+`veer_plugin_sdk.paths.assets_root()` is the portable value.**
 
 ---
 
@@ -1037,7 +1038,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-44-name-contract) records |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-56-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1561,7 +1562,7 @@ for internal use).
 # 6. Module-level helpers
 
 Reachable as `from veer_plugin_sdk import ...` (supporting tier — not in
-the 43-name manifest, but shipped and versioned with it).
+the 55-name manifest, but shipped and versioned with it).
 
 > **Where did `latlon_to_local_enu` / `plugin_data_dir` go?**  They — and
 > `read_osm_nodes` / `batch_latlon_to_local_enu` — were briefly importable
@@ -1594,12 +1595,12 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 44-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 56-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
 
-### CloudUnit (in the 44-name contract)
+### CloudUnit (in the 56-name contract)
 
 `ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
 cloud, importable as `from veer_plugin_sdk import CloudUnit`:
@@ -1621,6 +1622,32 @@ Two attribute-reading helpers ride with it (supporting tier):
 `attr_value(prim, name)` — the authored value of a prim attribute, or
 `None` when the prim, attribute, or value is absent or invalid.  Reading
 any other `atlas:*` attribute off a frame uses the same helper.
+
+### Project roots
+
+The standard prim roots — the same strings the host's own tools use,
+evaluated at call time so they follow the open stage.  Standalone (no
+host on `sys.path`) they resolve against `/Site_Untitled`, the root
+`testing.create_stage()` builds.  All twelve are in the contract (§8);
+never hardcode a site path, and never reach for `core.paths` — it only
+exists inside a host checkout.
+
+```python
+from veer_plugin_sdk import reference_roads_root   # or: veer_plugin_sdk.paths
+
+reference_root()          # <site>/Reference
+reality_root()            # <site>/Reality
+navigation_root()         # <site>/Navigation
+assets_root()             # <site>/Assets
+cameras_root()            # <site>/Cameras
+reference_roads_root()    # <site>/Reference/Roads
+reference_buildings_root()
+reference_satellite_root()
+reference_water_root()
+reference_landuse_root()
+reference_barriers_root()
+reference_other_root()
+```
 
 ---
 
@@ -1761,7 +1788,7 @@ behaviour.
 
 # 8. Exported-name index
 
-## Contract (44 names, pinned by `export-manifest.json`)
+## Contract (56 names, pinned by `export-manifest.json`)
 
 **Ports & metadata (22):**
 `BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
@@ -1781,6 +1808,12 @@ behaviour.
 `unsubscribe`, `WayDeleted`, `NodesPruned`, `LaneletCommitted`,
 `LaneletDeleted`, `RegulatoryElementDeleted`, `AreaCreated`,
 `LiftSessionStarted`, `LiftSessionEnded`
+
+**Paths (12):**
+`assets_root`, `cameras_root`, `navigation_root`, `reality_root`,
+`reference_barriers_root`, `reference_buildings_root`,
+`reference_landuse_root`, `reference_other_root`, `reference_root`,
+`reference_roads_root`, `reference_satellite_root`, `reference_water_root`
 
 ## Supporting types (importable, same package & version)
 

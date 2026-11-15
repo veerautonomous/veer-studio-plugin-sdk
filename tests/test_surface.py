@@ -62,7 +62,21 @@ EVENTS = [
     "LiftSessionStarted",
     "LiftSessionEnded",
 ]
-EXPECTED = PORTS + CONTEXTS + EVENTS
+PATHS = [
+    "assets_root",
+    "cameras_root",
+    "navigation_root",
+    "reality_root",
+    "reference_barriers_root",
+    "reference_buildings_root",
+    "reference_landuse_root",
+    "reference_other_root",
+    "reference_root",
+    "reference_roads_root",
+    "reference_satellite_root",
+    "reference_water_root",
+]
+EXPECTED = PORTS + CONTEXTS + EVENTS + PATHS
 
 
 def test_all_contract_names_exported():
@@ -79,6 +93,16 @@ def test_events_module_is_reachable():
 
     assert veer_plugin_sdk.subscribe is events.subscribe
     assert sorted(events.__all__) == sorted(EVENTS)
+
+
+def test_paths_module_is_reachable():
+    from veer_plugin_sdk import paths
+
+    assert veer_plugin_sdk.reference_roads_root is paths.reference_roads_root
+    assert sorted(paths.__all__) == sorted(PATHS)
+    # Callability is the sdk#5 promise: both modes return the default root.
+    assert paths.reference_roads_root().endswith("/Reference/Roads")
+    assert paths.assets_root().endswith("/Assets")
 
 
 def test_event_classes_subclass_domain_event():
