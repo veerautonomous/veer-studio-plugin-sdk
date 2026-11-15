@@ -306,7 +306,8 @@ class PluginMeta:
 
 
 # ---------------------------------------------------------------------------
-# Cloud role vocabulary — the point-cloud domain's role names
+# Cloud unit vocabulary — the point-cloud domain's role names, the unit
+# type, and the attribute reader they share
 # ---------------------------------------------------------------------------
 
 # Static definitions, not a lazy re-export: they have to ship inside the
@@ -320,6 +321,65 @@ ROLE_DERIVED = "derived"
 CLOUD_ROLES = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
 # The roles that may feed a geometric derivation (mesh generation, snapping).
 GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)
+
+ATTR_DISPLAY_NAME = "atlas:displayName"
+
+
+def attr_value(prim, name):
+    """The authored value of *name* on *prim*, or None when absent/invalid."""
+    if prim is None or not prim.IsValid():
+        return None
+    attr = prim.GetAttribute(name)
+    if not attr or not attr.IsValid():
+        return None
+    return attr.Get()
+
+
+@dataclass(frozen=True)
+class CloudUnit:
+    """One cloud unit: a frame prim plus its ``Points`` leaf.
+
+    ``role`` is the resolved role (the tile-prefix fallback already applied),
+    ``is_tile`` is ``atlas:tileStatus``, and ``is_current`` is the lineage
+    flag with "absent means current" applied.
+
+    Lives here rather than ``core.clouds`` for the same reason as the role
+    names above: ``ctx.cloud_units()``'s result type has to ship in the
+    SDK's standalone ``_ports.py`` copy, which gets no ``__getattr__``
+    dispatcher (veer-studio-plugin-sdk#6).  ``core.clouds._units`` re-exports
+    it, so ``from core.clouds import CloudUnit`` keeps working.
+    """
+
+    frame: object
+    points: object
+    role: str
+    is_tile: bool
+    is_current: bool
+
+    @property
+    def name(self) -> str:
+        """The frame's prim name."""
+        return self.frame.GetName()
+
+    @property
+    def display_name(self) -> str:
+        """The label a person reads: ``atlas:displayName``, else the frame name."""
+        return attr_value(self.frame, ATTR_DISPLAY_NAME) or self.name
+
+    @property
+    def frame_path(self) -> str:
+        """The frame's absolute prim path."""
+        return str(self.frame.GetPath())
+
+    @property
+    def points_path(self) -> str:
+        """The leaf's absolute prim path."""
+        return str(self.points.GetPath())
+
+    @property
+    def is_geometric(self) -> bool:
+        """Whether the unit may feed a geometric derivation."""
+        return self.role in GEOMETRIC_ROLES
 
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import veer_plugin_sdk
 
 PORTS = [
     "BaseOverlayRenderer",
+    "CloudUnit",
     "CreationSession",
     "CreationVerb",
     "Diagnostic",

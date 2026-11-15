@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 43 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 44 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -1037,7 +1037,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-44-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1594,10 +1594,33 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 43-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 44-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
+
+### CloudUnit (in the 44-name contract)
+
+`ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
+cloud, importable as `from veer_plugin_sdk import CloudUnit`:
+
+| Member | What it is |
+|---|---|
+| `frame` | the unit's frame prim (an `Xform` under `Reality/PointClouds`) |
+| `points` | the frame's single `Points` leaf prim |
+| `role` | resolved cloud role — the tile-prefix fallback already applied |
+| `is_tile` | `atlas:tileStatus` — whether the frame is a streamed tile |
+| `is_current` | lineage flag, with "absent means current" applied |
+| `name` | the frame's prim name |
+| `display_name` | `atlas:displayName`, else the frame name |
+| `frame_path` / `points_path` | the frame's / the leaf's absolute prim path (`str`) |
+| `is_geometric` | whether `role` is in `GEOMETRIC_ROLES` |
+
+Two attribute-reading helpers ride with it (supporting tier):
+`ATTR_DISPLAY_NAME = "atlas:displayName"` and
+`attr_value(prim, name)` — the authored value of a prim attribute, or
+`None` when the prim, attribute, or value is absent or invalid.  Reading
+any other `atlas:*` attribute off a frame uses the same helper.
 
 ---
 
@@ -1738,12 +1761,12 @@ behaviour.
 
 # 8. Exported-name index
 
-## Contract (43 names, pinned by `export-manifest.json`)
+## Contract (44 names, pinned by `export-manifest.json`)
 
-**Ports & metadata (21):**
-`BaseOverlayRenderer`, `CreationSession`, `CreationVerb`, `Diagnostic`,
-`ExportReport`, `GEOMETRIC_ROLES`, `IExporter`, `IFileImporter`,
-`IFusionPlugin`, `IIntegrationPlugin`, `IPanelFactory`,
+**Ports & metadata (22):**
+`BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
+`Diagnostic`, `ExportReport`, `GEOMETRIC_ROLES`, `IExporter`,
+`IFileImporter`, `IFusionPlugin`, `IIntegrationPlugin`, `IPanelFactory`,
 `IPluginPreferences`, `IStageContributor`, `IToolProvider`, `IValidator`,
 `JobSpec`, `OverlayLayer`, `PluginMeta`, `Severity`, `ToolResult`,
 `ValidationReport`
@@ -1774,8 +1797,9 @@ behaviour.
 
 **Errors:** `LayerPermissionError`, `DraftSessionDirtyError`
 
-**Helpers:** `parse_permission_block`, `matrix_to_list`,
-`ROLE_PRECISE`, `ROLE_APPEARANCE`, `ROLE_DERIVED`, `CLOUD_ROLES`
+**Helpers:** `parse_permission_block`, `matrix_to_list`, `attr_value`,
+`ATTR_DISPLAY_NAME`, `ROLE_PRECISE`, `ROLE_APPEARANCE`, `ROLE_DERIVED`,
+`CLOUD_ROLES`
 
 If a name you need is in neither list, it is not part of the contract —
 ask for it in the SDK issue tracker rather than importing around it

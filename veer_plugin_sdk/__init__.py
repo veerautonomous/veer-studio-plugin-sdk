@@ -38,6 +38,7 @@ from veer_plugin_sdk.events import (
 
 __all__ = [
     'BaseOverlayRenderer',
+    'CloudUnit',
     'CreationSession',
     'CreationVerb',
     'Diagnostic',

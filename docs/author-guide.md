@@ -19,13 +19,13 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The stability contract is 43 names — the list in `export-manifest.json`,
+The stability contract is 44 names — the list in `export-manifest.json`,
 asserted by `tests/test_surface.py`, exactly matching
 `veer_plugin_sdk.__all__`.  Three groups:
 
 | Group | Names | What they are |
 |---|---|---|
-| Ports (21) | `IToolProvider`, `IFileImporter`, `IValidator`, … | The ABCs your plugin classes implement |
+| Ports (22) | `IToolProvider`, `IFileImporter`, `CloudUnit`, … | The ABCs your plugin classes implement — plus `CloudUnit`, the record `ctx.cloud_units()` returns |
 | Contexts (6) | `ToolContext`, `PanelContext`, `StageManagerInterface`, … | The capabilities the host hands you at runtime |
 | Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
 
