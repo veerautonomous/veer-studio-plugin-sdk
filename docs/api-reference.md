@@ -1619,27 +1619,58 @@ pip install "veer-studio-plugin-sdk[testing]"
 Each factory returns a fully-populated context of the right type with
 mock callbacks; **every field is overridable via `**overrides`**.
 
+Context callbacks come in three classes, and the defaults follow the
+class:
+
+- **Queries** answer a question about state and change nothing.  Defaults
+  give *empty-world* answers — honest about the mock stage, which has no
+  ground mesh and no clouds.  Tests that need a live scenario override
+  them.
+- **Notify** callbacks tell the host something happened (status, cursor,
+  overlay, selection).  Defaults are **silent no-ops**: the call never
+  raises and records nothing.  A test that wants to assert on them
+  overrides with its own spy (the pattern the sample's `make_ctx` uses).
+- **Write** doors mutate the stage, layers, or project on disk, gated by
+  permissions.  Defaults leave them **`None` on purpose**, so a unit test
+  that reaches one fails loudly instead of silently writing.
+
 ```python
 def tool_context(**overrides) -> ToolContext
 ```
-Defaults: `stage=create_stage()` (in-memory, site root + assets),
-`stage_manager=MockStageManager()`, `selection=[]`, `project_dir=""`,
-`preferences={}`, `plugin_data_dir` → a fresh temp dir per call, and
-stub callbacks — `get_ground_height → 0.0`, `find_nearest_prim → None`,
-`find_prims_in_radius → []`, `screen_to_world → (None, None)`.
+
+Base: `stage=create_stage()` (in-memory, site root + assets),
+`stage_manager=MockStageManager()`, `selection=[]`, `selection_set=[]`,
+`project_dir=""`, `preferences={}`.
+
+| Class | Defaults |
+|---|---|
+| Queries | `has_ground_mesh → False`, `has_ground_mesh_at → True` (the host returns `True` when no mesh exists), `get_ground_mesh_height → None`, `build_ground_mesh_cache → None`, `cloud_units → []`, `get_ground_height → 0.0`, `find_nearest_prim → None`, `find_prims_in_radius → []`, `screen_to_world → (None, None)`, `get_selection_set → []`, `get_world_center → None`, `is_atlas_object / is_navigable_target → False`, `get_atlas_type / get_atlas_object_id / get_assembly_terminals → None`, `snapshot_camera → {}`, `plugin_data_dir` → one fresh temp directory **per context** (the same path on every call, as the host requires) |
+| i18n | `translate(msgctxt, text) → text` (source text; `current_locale` stays `"en"`) |
+| Notify (no-ops) | `register_overlay`, `unregister_overlay`, `request_cursor`, `release_cursor`, `show_status`, `set_tool_hints`, `show_progress`, `hide_progress`, `request_tree_refresh`, `on_selection_changed`, `set_selection_set`, `set_auxiliary_dock`, `clear_auxiliary_dock`, `request_deactivate`, `restore_camera`, `frame_prim`, `register_prim_menu_entry`, `register_edit_session_entry` |
+| Write (left `None`) | `import_file`, `push_undo`, `create_edit_scope`, `create_undo_checkpoint`, `create_multi_undo_checkpoint`, `regenerate_meshes`, `regenerate_mesh_in_job`, `upsert_point_cloud_tile`, `consolidate_point_cloud_run`, `discard_point_cloud_run` |
+| Host objects (left `None`) | `viewport`, `gizmo_manager`, `jobs` |
+
+`latlon_to_local_enu` raises `NotImplementedError` rather than returning a
+guess: the projection door is ruled separately, and a test that projects
+should override it with a real projection.
 
 ```python
 def panel_context(**overrides) -> PanelContext
 def editor_context(**overrides) -> EditorContext
 def mutation_context(**overrides) -> StageMutationContext
 ```
-`panel_context` mirrors the ToolContext defaults (stage, mock manager,
-prefs, data dir) with signal callbacks `None`.  `editor_context` defaults
-`request_refresh=None`.  `mutation_context` defaults `stage=None`,
-`edit_target_layer_path=""`, `triggering_prim_path=""` and the same stub
-spatial callbacks.  `mutation_context` lives in
-`veer_plugin_sdk.testing.mock_contexts` (not re-exported from
-`veer_plugin_sdk.testing`).
+
+`panel_context` mirrors the ToolContext base (stage, mock manager, prefs,
+data dir, stable `plugin_data_dir`), gives `translate` the same identity
+default, no-ops the three `on_*` signals, and leaves `push_undo` (a write
+door) `None`.  `editor_context` defaults `translate` to identity and
+`active_tool_id → None`, no-ops `request_refresh`, `select_prim`,
+`hover_prim`, `activate_tool`, and leaves `push_undo` `None`.
+`mutation_context` defaults `stage=None`, `edit_target_layer_path=""`,
+`triggering_prim_path=""`, the stub spatial callbacks, `translate` to
+identity, and `is_atlas_object / is_navigable_target → False`.
+`mutation_context` lives in `veer_plugin_sdk.testing.mock_contexts` (not
+re-exported from `veer_plugin_sdk.testing`).
 
 ### Mock stage
 
