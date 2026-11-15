@@ -1594,15 +1594,16 @@ for internal use).
 
 # 6. Module-level helpers
 
-Reachable as `from veer_plugin_sdk import ...` (supporting tier — not in
-the 57-name manifest, but shipped and versioned with it).
+Reachable as `from veer_plugin_sdk import ...`.  Most of this section is
+the *supporting* tier — shipped and versioned with the package but not
+pinned by the 57-name manifest — with two contract exceptions:
+`GEOMETRIC_ROLES` and the twelve [project roots](#project-roots) below.
 
 > **Where did `latlon_to_local_enu` / `plugin_data_dir` go?**  They — and
 > `read_osm_nodes` / `batch_latlon_to_local_enu` — were briefly importable
 > from the package as module-level functions, but their implementations
 > live in the host and they only ever raised `ModuleNotFoundError` outside
-> it; they were excised from the SDK surface
-> ([veer-studio-plugin-sdk#2](http://gitea.local/veer/veer-studio-plugin-sdk/issues/2)).
+> it; they were excised from the SDK surface.
 > The sanctioned doors are the **context callbacks**: `ctx.latlon_to_local_enu(...)`
 > and `ctx.plugin_data_dir()` — documented with
 > [ToolContext](#toolcontext) — which you inject in tests.
@@ -1864,7 +1865,7 @@ behaviour.
 
 **Errors:** `LayerPermissionError`, `DraftSessionDirtyError`
 
-**Helpers:** `parse_permission_block`, `matrix_to_list`, `attr_value`,
+**Helpers:** `matrix_to_list`, `attr_value`,
 `ATTR_DISPLAY_NAME`, `ROLE_PRECISE`, `ROLE_APPEARANCE`, `ROLE_DERIVED`,
 `CLOUD_ROLES`
 

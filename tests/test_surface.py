@@ -7,7 +7,10 @@ release runs the checks for that release.
 
 from __future__ import annotations
 
+import json
+import re
 import sys
+from pathlib import Path
 
 import veer_plugin_sdk
 
@@ -87,6 +90,30 @@ def test_all_contract_names_exported():
 
 def test_all_matches_contract_exactly():
     assert sorted(veer_plugin_sdk.__all__) == sorted(EXPECTED)
+
+
+def test_api_reference_index_matches_manifest_and_all():
+    """§8's contract list, export-manifest.json and __all__ must agree.
+
+    The index is what an author reads; a name landing in one of the three
+    and not the others is the drift this suite exists to catch.
+    """
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "api-reference.md").read_text(encoding="utf-8")
+    section = re.search(
+        r"^## Contract \(\d+ names[^\n]*\n(.*?)(?=^## )",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    assert section, "api-reference.md §8 contract section missing"
+    listed = sorted(set(re.findall(r"`([A-Za-z_][A-Za-z0-9_]*)`", section.group(1))))
+    manifest = json.loads(
+        (root / "export-manifest.json").read_text(encoding="utf-8")
+    )
+    recorded = sorted(entry["name"] for entry in manifest["names"])
+    assert listed == recorded == sorted(EXPECTED), (
+        f"index={listed!r} manifest={recorded!r} all={sorted(EXPECTED)!r}"
+    )
 
 
 def test_events_module_is_reachable():

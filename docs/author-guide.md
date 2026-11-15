@@ -275,6 +275,7 @@ beside the clouds.
 | You want to | Call |
 |---|---|
 | discover clouds on the stage | `ctx.cloud_units(roles=GEOMETRIC_ROLES)` |
+| replace a finished cloud's points | `ctx.derive_cloud(...)` → `ctx.revert_derived_clouds(...)` (see [Replacing a cloud's points](#replacing-a-clouds-points)) |
 | stream tiles as you produce them | `ctx.upsert_point_cloud_tile(...)` |
 | finish or abandon a run | `ctx.consolidate_point_cloud_run(...)` / `ctx.discard_point_cloud_run(...)` |
 | query the ground | `ctx.get_ground_height`, `ctx.has_ground_mesh`, `ctx.build_ground_mesh_cache` |
@@ -582,9 +583,18 @@ Useful properties of the toolkit:
 
 - **`tool_context(**overrides)`** (and `panel_context`,
   `editor_context`, `mutation_context` — the last lives in
-  `veer_plugin_sdk.testing.mock_contexts`) — every field is overridable;
-  defaults include stub spatial callbacks (`get_ground_height → 0.0`,
-  `find_prims_in_radius → []`) and a fresh temp `plugin_data_dir`.
+  `veer_plugin_sdk.testing.mock_contexts`) — every field is overridable.
+  Defaults come in three classes, and the class is the contract:
+  **queries** answer *empty-world* (no ground mesh, no clouds —
+  `has_ground_mesh → False`, `cloud_units → []`, `get_ground_height →
+  0.0`); **notify** callbacks are silent no-ops (assert with your own
+  spy if you need one); **write** doors stay `None` on purpose, so a
+  unit test that reaches one fails loudly instead of writing.
+  `latlon_to_local_enu` raises `NotImplementedError` rather than
+  guessing a projection, and `plugin_data_dir` is one fresh temp
+  directory per context (stable across calls, as the host requires).
+  The full default table lives in the
+  [API reference — testing toolkit](api-reference.md#7-testing-toolkit).
 - **`MockStageManager`** records every mutating call for inspection
   (`added_sublayers`, `deleted_prims`, `edit_targets`, `named_layers`, …)
   with setters (`set_stage`, `add_existing_sublayer`) and `reset()`.
@@ -621,6 +631,12 @@ These tests run identically in your CI — this repo's own
 - **`LayerPermissionError`** — your `permissions.write` doesn't cover the
   target layer's category (or is empty = read-only).  Declare the
   category in the manifest; don't route around the check.
+- **`ImportError: cannot import name 'X' from 'veer_plugin_sdk'`** —
+  `X` is in neither the contract nor the supporting types.  Check the
+  [exported-name index](api-reference.md#8-exported-name-index); if it
+  belongs there, ask for it in the SDK issue tracker rather than reaching
+  for a host import (`import core.…` works only inside a host checkout
+  and fails everywhere else).
 - **`No module named 'core.ports'`** — another installed package named
   `core` is shadowing the standalone path.  Rename or uninstall it; the
   SDK only falls back to its bundled copies when the top-level `core`
