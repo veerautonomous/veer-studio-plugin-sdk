@@ -16,6 +16,17 @@ except ModuleNotFoundError as _exc:
         raise
     from veer_plugin_sdk._ports import *  # noqa: F403
     from veer_plugin_sdk._contexts import *  # noqa: F403
+    from veer_plugin_sdk._coord_utils import (
+        batch_latlon_to_local_enu,
+        latlon_to_local_enu,
+    )
+    from veer_plugin_sdk._platform_paths import (
+        plugin_data_dir as _plugin_data_dir_impl,
+    )
+
+    def plugin_data_dir(plugin_id: str) -> str:
+        """A plugin's data root as ``str`` — the host door's return type."""
+        return str(_plugin_data_dir_impl(plugin_id))
 
 from veer_plugin_sdk.events import (
     DomainEvent,
@@ -81,6 +92,9 @@ __all__ = [
     'StageMutationContext',
     'ToolContext',
     'ToolEvent',
+    'latlon_to_local_enu',
+    'batch_latlon_to_local_enu',
+    'plugin_data_dir',
     'DomainEvent',
     'ToolActivated',
     'ToolDeactivated',

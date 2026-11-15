@@ -41,6 +41,7 @@ from typing import Optional
 
 from veer_plugin_sdk import (
     ToolContext, PanelContext, EditorContext, StageMutationContext,
+    latlon_to_local_enu,
 )
 
 __all__ = [
@@ -96,9 +97,10 @@ def tool_context(**overrides) -> ToolContext:
           ``regenerate_mesh_in_job``, ``upsert_point_cloud_tile``,
           ``consolidate_point_cloud_run``, ``discard_point_cloud_run``,
           ``derive_cloud``, ``revert_derived_clouds``
-        - ``latlon_to_local_enu`` raises :class:`NotImplementedError` — the
-          projection door is ruled separately (gitea
-          ``veer-studio-plugin-sdk#11``); override it with your projection
+        - ``latlon_to_local_enu``: the **real** projection (pyproj-backed,
+          sdk#11) — ``origin`` is required and omitting it raises
+          ``ValueError`` naming the two ways to get one; a test that wants
+          canned coordinates overrides it
         - ``viewport`` / ``gizmo_manager`` / ``jobs`` stay ``None`` (host
           objects; not mocked)
 
@@ -165,13 +167,6 @@ def tool_context(**overrides) -> ToolContext:
     def _mock_plugin_data_dir() -> str:
         return data_dir
 
-    def _mock_latlon_to_local_enu(lat, lon, ele=0.0, *, origin):
-        raise NotImplementedError(
-            "latlon_to_local_enu is not wired in veer_plugin_sdk.testing; "
-            "override it with your projection "
-            "(http://gitea.local/veer/veer-studio-plugin-sdk/issues/11)"
-        )
-
     defaults = {
         # -- stage / selection --------------------------------------------
         "stage": create_stage(),
@@ -199,7 +194,7 @@ def tool_context(**overrides) -> ToolContext:
         "is_navigable_target": lambda prim_path: False,
         "get_assembly_terminals": _mock_get_assembly_terminals,
         "snapshot_camera": _mock_snapshot_camera,
-        "latlon_to_local_enu": _mock_latlon_to_local_enu,
+        "latlon_to_local_enu": latlon_to_local_enu,
         # -- i18n -----------------------------------------------------------
         "translate": _translate,
         # -- notify: silent no-ops -----------------------------------------

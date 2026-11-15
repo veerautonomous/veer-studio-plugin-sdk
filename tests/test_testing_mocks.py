@@ -6,6 +6,7 @@ Skipped when the ``[testing]`` extra (usd-core) is not installed.
 from __future__ import annotations
 
 import dataclasses
+from types import SimpleNamespace
 
 import pytest
 
@@ -130,10 +131,24 @@ def test_write_doors_stay_unwired():
         assert getattr(ctx, name) is None, f"{name} is a write door"
 
 
-def test_latlon_projection_is_an_honest_tripwire():
+def test_latlon_projection_projects_for_real():
+    """The stub ships the real projection (sdk#11): origin required, honest
+    math — an anchor placed at its own origin projects to the zero point."""
     ctx = tool_context()
-    with pytest.raises(NotImplementedError, match="latlon_to_local_enu"):
-        ctx.latlon_to_local_enu(47.6, -122.3, origin=object())
+    with pytest.raises(ValueError, match="SiteOrigin"):
+        ctx.latlon_to_local_enu(47.6, -122.3)
+
+    anchor = SimpleNamespace(
+        anchor_mode="tangent_plane", anchor_lat=47.6, anchor_lon=-122.3,
+    )
+    x, y, z = ctx.latlon_to_local_enu(47.6, -122.3, origin=anchor)
+    assert (x, y, z) == (0.0, 0.0, 0.0)
+
+    # A metre north of the anchor: AEQD keeps direction true at short range.
+    x, y, z = ctx.latlon_to_local_enu(47.6 + 9.0e-6, -122.3, origin=anchor)
+    assert y == pytest.approx(1.0, abs=0.05)
+    assert x == pytest.approx(0.0, abs=0.05)
+    assert z == 0.0
 
 
 def test_plugin_data_dir_is_stable_per_context():

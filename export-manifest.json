@@ -266,15 +266,33 @@
     },
     {
       "kind": "def",
+      "module": "core.contexts",
+      "name": "batch_latlon_to_local_enu",
+      "signature": "def(nodes, *, origin=None)"
+    },
+    {
+      "kind": "def",
       "module": "core.paths",
       "name": "cameras_root",
       "signature": "def() -> str"
     },
     {
       "kind": "def",
+      "module": "core.contexts",
+      "name": "latlon_to_local_enu",
+      "signature": "def(lat, lon, ele=0.0, *, origin=None)"
+    },
+    {
+      "kind": "def",
       "module": "core.paths",
       "name": "navigation_root",
       "signature": "def() -> str"
+    },
+    {
+      "kind": "def",
+      "module": "core.contexts",
+      "name": "plugin_data_dir",
+      "signature": "def(plugin_id: 'str') -> 'str'"
     },
     {
       "kind": "def",
@@ -343,5 +361,5 @@
       "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
     }
   ],
-  "version": "1.5.1"
+  "version": "1.6.0"
 }

@@ -19,14 +19,15 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The stability contract is 57 names — the list in `export-manifest.json`,
+The stability contract is 60 names — the list in `export-manifest.json`,
 asserted by `tests/test_surface.py`, exactly matching
-`veer_plugin_sdk.__all__`.  Four groups:
+`veer_plugin_sdk.__all__`.  Five groups:
 
 | Group | Names | What they are |
 |---|---|---|
 | Ports (22) | `IToolProvider`, `IFileImporter`, `CloudUnit`, … | The ABCs your plugin classes implement — plus `CloudUnit`, the record `ctx.cloud_units()` returns |
 | Contexts (7) | `ToolContext`, `PanelContext`, `StageManagerInterface`, `DerivedCloudHandle`, … | The capabilities the host hands you at runtime |
+| Context-less doors (3) | `latlon_to_local_enu`, `batch_latlon_to_local_enu`, `plugin_data_dir` | The module-level doors for code that holds no context — an `import_file` body, a module-level event subscriber |
 | Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
 | Paths (12) | `reference_roads_root`, `assets_root`, … | The standard project prim roots — never hardcode a site path |
 
@@ -259,6 +260,12 @@ anchor them.
 | import OSM source data | an `IFileImporter` with `destination_category() -> "Navigation"` |
 | place geo coordinates | `ctx.latlon_to_local_enu(lat, lon, origin=ctx.stage_manager.read_site_origin())` — the origin is required; a project without one raises |
 | gate quality before export | an `IValidator` returning a `ValidationReport` |
+
+Inside `import_file` — which receives no context — the projection door
+exists at module level: `from veer_plugin_sdk import latlon_to_local_enu`
+(origin required; `pip install` of the package brings its pyproj
+dependency).  The same holds for a module-level event subscriber's data
+root: `from veer_plugin_sdk import plugin_data_dir`.
 
 ### Reality — the captured world
 

@@ -48,6 +48,11 @@ CONTEXTS = [
     "ToolContext",
     "ToolEvent",
 ]
+STANDALONE = [
+    "latlon_to_local_enu",
+    "batch_latlon_to_local_enu",
+    "plugin_data_dir",
+]
 EVENTS = [
     "DomainEvent",
     "ToolActivated",
@@ -80,7 +85,7 @@ PATHS = [
     "reference_satellite_root",
     "reference_water_root",
 ]
-EXPECTED = PORTS + CONTEXTS + EVENTS + PATHS
+EXPECTED = PORTS + CONTEXTS + STANDALONE + EVENTS + PATHS
 
 
 def test_all_contract_names_exported():
@@ -114,6 +119,12 @@ def test_api_reference_index_matches_manifest_and_all():
     assert listed == recorded == sorted(EXPECTED), (
         f"index={listed!r} manifest={recorded!r} all={sorted(EXPECTED)!r}"
     )
+
+
+def test_standalone_doors_are_callable():
+    """The context-less doors (sdk#11) are real functions, not stubs."""
+    for name in STANDALONE:
+        assert callable(getattr(veer_plugin_sdk, name)), name
 
 
 def test_events_module_is_reachable():

@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 57 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 60 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -1038,7 +1038,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-57-name-contract) records |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-60-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1596,17 +1596,21 @@ for internal use).
 
 Reachable as `from veer_plugin_sdk import ...`.  Most of this section is
 the *supporting* tier — shipped and versioned with the package but not
-pinned by the 57-name manifest — with two contract exceptions:
-`GEOMETRIC_ROLES` and the twelve [project roots](#project-roots) below.
+pinned by the 60-name manifest.  The contract-tier members: the two
+[projection doors](#projection-doors-contract-tier) and the
+[plugin data root](#plugin-data-root-contract-tier) (sdk#11),
+`GEOMETRIC_ROLES`, and the twelve [project roots](#project-roots).
 
-> **Where did `latlon_to_local_enu` / `plugin_data_dir` go?**  They — and
-> `read_osm_nodes` / `batch_latlon_to_local_enu` — were briefly importable
-> from the package as module-level functions, but their implementations
-> live in the host and they only ever raised `ModuleNotFoundError` outside
-> it; they were excised from the SDK surface.
-> The sanctioned doors are the **context callbacks**: `ctx.latlon_to_local_enu(...)`
-> and `ctx.plugin_data_dir()` — documented with
-> [ToolContext](#toolcontext) — which you inject in tests.
+> **Back from excision, with implementations.**  `latlon_to_local_enu`,
+> `batch_latlon_to_local_enu`, and `plugin_data_dir` were excised from the
+> package in [veer-studio-plugin-sdk#2](http://gitea.local/veer/veer-studio-plugin-sdk/issues/2)
+> as importable-but-unreachable forwarders (their implementations lived in
+> the host); [veer-studio-plugin-sdk#11](http://gitea.local/veer/veer-studio-plugin-sdk/issues/11)
+> re-ships them with implementations that run standalone.  They serve the
+> **context-less paths** — an `IFileImporter.import_file` body and a
+> module-level event subscriber hold no `ToolContext`, so the context
+> callbacks (`ctx.latlon_to_local_enu(...)`, `ctx.plugin_data_dir()`) cannot
+> reach them.  `read_osm_nodes` stays host-only.
 
 ```python
 def parse_permission_block(name: str, raw) -> tuple[dict, dict]
@@ -1622,6 +1626,36 @@ discovery.
 def matrix_to_list(m) -> list        # Gf.Matrix4d -> 16 floats for glLoadMatrixd
 ```
 
+### Projection doors (contract tier)
+
+```python
+def latlon_to_local_enu(lat, lon, ele=0.0, *, origin=None) -> tuple[float, float, float]
+def batch_latlon_to_local_enu(nodes, *, origin=None) -> dict
+```
+
+WGS84 → local ENU metres, pyproj-backed — the same library the host
+projects with, so in-host and standalone results are identical.  `origin`
+is **required**: there is no default frame, and omitting it raises
+`ValueError` naming the two ways to get a real one — build a `SiteOrigin`
+(`SiteOrigin.from_bbox(bbox)`), or read the stage's
+(`ctx.stage_manager.read_site_origin(stage)`).  Inside `import_file`,
+which receives no context, build the origin from the parsed data's bbox.
+
+`batch_latlon_to_local_enu` converts `{id: {"lat": ..., "lon": ...}}`
+records to `{id: (x, y, z)}` in one call.
+
+### Plugin data root (contract tier)
+
+```python
+def plugin_data_dir(plugin_id: str) -> str
+```
+
+The plugin's intermediate-file directory (`<cache>/veer-studio/plugin_data/<plugin_id>/`),
+created on demand, returned as `str` — the standalone body of the host
+door and of the `ToolContext` / `PanelContext` capabilities, so one root
+serves `execute()` *and* a module-level event subscriber.  Retention is
+the plugin's own business; the host only owns the path.
+
 ### Cloud role constants
 
 ```python
@@ -1629,12 +1663,12 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 57-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 60-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
 
-### CloudUnit (in the 57-name contract)
+### CloudUnit (in the 60-name contract)
 
 `ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
 cloud, importable as `from veer_plugin_sdk import CloudUnit`:
@@ -1822,7 +1856,7 @@ behaviour.
 
 # 8. Exported-name index
 
-## Contract (57 names, pinned by `export-manifest.json`)
+## Contract (60 names, pinned by `export-manifest.json`)
 
 **Ports & metadata (22):**
 `BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
@@ -1836,6 +1870,9 @@ behaviour.
 `DerivedCloudHandle`, `EditorContext`, `PanelContext`,
 `StageManagerInterface`, `StageMutationContext`, `ToolContext`,
 `ToolEvent`
+
+**Context-less doors (3):**
+`latlon_to_local_enu`, `batch_latlon_to_local_enu`, `plugin_data_dir`
 
 **Events (16):**
 `DomainEvent`, `ToolActivated`, `ToolDeactivated`, `ToolModeChanged`,

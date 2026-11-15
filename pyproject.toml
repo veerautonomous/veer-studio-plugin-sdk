@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veer-studio-plugin-sdk"
-version = "1.5.1"
+version = "1.6.0"
 description = "Contract surface for writing Veer Studio plugins without the Veer Studio source tree"
 readme = "README.md"
 license = "Apache-2.0"
@@ -19,6 +19,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+]
+# The projection doors (latlon_to_local_enu / batch_latlon_to_local_enu)
+# are pyproj-backed: a standalone copy must project identically to the
+# host, which means the same PROJ library — not a reimplementation that
+# diverges at float precision (veer-studio-plugin-sdk#11).
+dependencies = [
+    "pyproj>=3.5",
 ]
 
 [project.optional-dependencies]
