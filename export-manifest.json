@@ -1,6 +1,24 @@
 {
   "names": [
     {
+      "kind": "const",
+      "module": "core.ports",
+      "name": "ATTR_IMPORT_MODE",
+      "signature": "const:'atlas:importMode'"
+    },
+    {
+      "kind": "const",
+      "module": "core.ports",
+      "name": "ATTR_IMPORT_TRANSFORM",
+      "signature": "const:'atlas:importTransform'"
+    },
+    {
+      "kind": "const",
+      "module": "core.ports",
+      "name": "ATTR_SOURCE_CRS",
+      "signature": "const:'atlas:sourceCoordinateSystem'"
+    },
+    {
       "kind": "class",
       "module": "core.navigation._events",
       "name": "AreaCreated",
@@ -188,6 +206,12 @@
     },
     {
       "kind": "class",
+      "module": "core.ports",
+      "name": "SiteOrigin",
+      "signature": "class:anchor_ele: float;anchor_lat: float;anchor_lon: float;anchor_mode: str;from_bbox(bbox: 'tuple[float, float, float, float]', *, mode: 'str' = 'utm_grid') -> \"'SiteOrigin'\";from_layer(root_layer) -> \"'SiteOrigin'\";grid_reference(self) -> 'str';mgrs_grid: str | None;source: str | None;utm_epsg(self) -> 'int | None';utm_hemisphere: str | None;utm_zone: int | None;write_to_layer(self, root_layer) -> 'None';z_shift: float | None"
+    },
+    {
+      "kind": "class",
       "module": "core.contexts",
       "name": "StageManagerInterface",
       "signature": "class:add_sublayer(self, layer_path: 'str', position: 'int' = -1) -> 'None';create_atlas_prim(self, atlas_type_name: 'str', position, **kwargs) -> 'str';create_checkpoint(self, label: 'str' = '') -> 'str';delete_prim(self, prim_path: 'str', plugin_id: 'str' = '', checkpoint=None) -> 'bool';ensure_draft_overlay(self, original_path: 'str') -> 'str | None';ensure_editable_category(self, category: 'str') -> 'str | None';ensure_editable_layer(self, layer_path: 'str') -> 'str | None';ensure_editable_prim(self, prim_path: 'str') -> 'str | None';ensure_named_category_layer(self, category: 'str', file_name: 'str') -> 'str | None';find_all_point_clouds(self) -> 'list';find_point_cloud(self);find_point_cloud_frame(self);get_draft_layer_path(self, original_path: 'str') -> 'str | None';get_ground_height_at(self, x: 'float', y: 'float') -> 'float';get_layer_by_identifier(self, identifier: 'str');get_layer_paths(self) -> 'list[str]';get_project_dir(self) -> 'str';get_stage(self) -> \"'Usd.Stage'\";has_ground_mesh(self) -> 'bool';has_unsaved_layers(self) -> 'bool';is_dirty(self) -> 'bool';is_draft_path(self, layer_path: 'str') -> 'bool';mark_dirty(self) -> 'None';mark_dirty_layer(self, layer_id: 'str' = None) -> 'None';notify_prims_modified(self, prim_paths: 'list[str]') -> 'None';read_site_origin(self);save_draft_overlays(self) -> 'int';save_layer(self, layer_path: 'str') -> 'None';save_stage(self) -> 'None';set_edit_target(self, layer_path: 'str') -> 'None'"
@@ -278,6 +302,24 @@
     },
     {
       "kind": "def",
+      "module": "core.paths",
+      "name": "color_field_prim_path",
+      "signature": "def(index: int) -> str"
+    },
+    {
+      "kind": "def",
+      "module": "core.paths",
+      "name": "colorfields_root",
+      "signature": "def() -> str"
+    },
+    {
+      "kind": "def",
+      "module": "core.ports",
+      "name": "imported_source_id",
+      "signature": "def(source_key: 'str', kind: 'str', source_id: 'int | str') -> 'str'"
+    },
+    {
+      "kind": "def",
       "module": "core.contexts",
       "name": "latlon_to_local_enu",
       "signature": "def(lat, lon, ele=0.0, *, origin=None)"
@@ -293,6 +335,18 @@
       "module": "core.contexts",
       "name": "plugin_data_dir",
       "signature": "def(plugin_id: 'str') -> 'str'"
+    },
+    {
+      "kind": "def",
+      "module": "core.paths",
+      "name": "pointcloud_frame_path",
+      "signature": "def(frame_index: int | str) -> str"
+    },
+    {
+      "kind": "def",
+      "module": "core.paths",
+      "name": "pointclouds_root",
+      "signature": "def() -> str"
     },
     {
       "kind": "def",
@@ -350,6 +404,12 @@
     },
     {
       "kind": "def",
+      "module": "core.ports",
+      "name": "source_key_for",
+      "signature": "def(source_path: 'str') -> 'str'"
+    },
+    {
+      "kind": "def",
       "module": "core.events",
       "name": "subscribe",
       "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
@@ -361,5 +421,5 @@
       "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
     }
   ],
-  "version": "1.6.0"
+  "version": "1.7.0"
 }

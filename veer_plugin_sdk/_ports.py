@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
@@ -2158,3 +2159,359 @@ class IUnsavedStateProvider(ABC):
     @plugin_id.setter
     def plugin_id(self, value: str) -> None:
         self._plugin_id = value
+
+
+
+# ---------------------------------------------------------------------------
+# Import vocabulary — the import door's stamps, the declared origin, and
+# import identity (veer/veer-studio-plugin-sdk#10)
+# ---------------------------------------------------------------------------
+
+# Static definitions, not lazy re-exports, for the same reason as the cloud
+# roles above: the SDK's standalone ``_ports.py`` copy gets no
+# ``__getattr__`` dispatcher.  ``core.atlas_schema``, ``core.site_origin``
+# and ``core.navigation._identity`` re-import these, so every existing
+# import line keeps working.  These run *inside* ``import_file`` — a path
+# with no ToolContext — which is why they are module-level, not doors.
+
+# -- Import-door stamps: authored once at import, never mutated -----------
+ATTR_IMPORT_MODE = "atlas:importMode"             # token: auto_center | auto_center_reproject | mgrs_grid | raw | declared_origin
+ATTR_SOURCE_CRS = "atlas:sourceCoordinateSystem"   # string: e.g. "MGRS_local_metres:54SVE"
+ATTR_IMPORT_TRANSFORM = "atlas:importTransform"    # Matrix4d: source→stage-local (baked into points)
+
+# -- SiteOrigin: typed view of the coordinate anchor on the root layer ----
+# customLayerData keys (stored in root layer, not on prims)
+_KEY_ANCHOR_MODE = "atlas:anchorMode"
+_KEY_ANCHOR_LAT = "atlas:anchorLat"
+_KEY_ANCHOR_LON = "atlas:anchorLon"
+_KEY_ANCHOR_ELE = "atlas:anchorEle"
+_KEY_UTM_ZONE = "atlas:utmZone"
+_KEY_UTM_HEMISPHERE = "atlas:utmHemisphere"
+# NOTE: MAP_SPEC §3 names the elevation key ``atlas:anchorHeight``; the
+# existing implementation predates that and uses ``atlas:anchorEle``.  The
+# two refer to the same concept.  We keep the existing key to avoid
+# breaking OSM / vectormap imports that already read it.
+_KEY_Z_SHIFT = "atlas:zShift"
+_KEY_MGRS_GRID = "atlas:mgrsGrid"
+_KEY_SOURCE = "atlas:source"
+
+# Latitude bands C..X, 8° each, 80°S to 84°N.  Index 10 (N) = equator.
+_LAT_BANDS = "CDEFGHJKLMNPQRSTUVWXX"
+# 100 km column letters cycle every third zone.
+_E100K_SETS = ("ABCDEFGH", "JKLMNPQR", "STUVWXYZ")
+# 100 km row letters cycle every other zone, repeating every 2,000 km.
+_N100K_SETS = ("ABCDEFGHJKLMNPQRSTUV", "FGHJKLMNPQRSTUVABCDE")
+
+
+def _utm_zone_from_lon(lon: float) -> int:
+    """Auto-detect UTM zone from WGS84 longitude.
+
+    Zones are 6° wide starting at 180°W: zone 1 covers [-180°, -174°).
+    """
+    return int((lon + 180.0) / 6.0) + 1
+
+
+def _opt_int(value) -> int | None:
+    """Parse an optional integer from customLayerData (may be stored as int or str)."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _opt_float(value) -> float | None:
+    """Parse an optional float from customLayerData (may be stored as float or str)."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _latlon_to_grid_name(lat: float, lon: float) -> str:
+    """MGRS grid zone designator + 100 km square for *lat*, *lon*.
+
+    Uses ``pyproj`` for the UTM projection when available (full accuracy);
+    falls back to zone + latitude band only (e.g. ``"54S"``) when pyproj is
+    not installed.
+    """
+    # Zone and hemisphere (pure math, no projection needed).
+    zone = int((lon + 180.0) / 6.0) + 1
+    if zone > 60:
+        zone = 60
+    hemisphere = "N" if lat >= 0 else "S"
+
+    # Latitude band.
+    band_idx = int((lat + 80.0) / 8.0)
+    band_idx = max(0, min(len(_LAT_BANDS) - 1, band_idx))
+    band = _LAT_BANDS[band_idx]
+
+    # Try pyproj for the 100 km square letters.  Fall back to zone+band if
+    # pyproj is not installed (it's a heavy dependency — optional in core).
+    try:
+        import pyproj  # noqa: PLC0415
+
+        epsg = (32600 if hemisphere == "N" else 32700) + zone
+        ll2utm = pyproj.Transformer.from_crs(
+            "EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+        easting, northing = ll2utm.transform(lon, lat)
+
+        col = int(easting / 100_000.0)
+        col_set = _E100K_SETS[(zone - 1) % 3]
+        col_letter = col_set[col - 1] if 1 <= col <= len(col_set) else ""
+
+        row = int(northing / 100_000.0) % 20
+        row_set = _N100K_SETS[(zone - 1) % 2]
+        row_letter = row_set[row] if 0 <= row < len(row_set) else ""
+
+        square = f"{col_letter}{row_letter}" if col_letter and row_letter else ""
+    except ImportError:
+        square = ""
+
+    if square:
+        return f"{zone}{band} {square}"
+    return f"{zone}{band}"
+
+
+@dataclass
+class SiteOrigin:
+    """Site origin — typed view of the coordinate anchor on the root layer.
+
+    All fields map to ``customLayerData`` keys on the root layer.
+    """
+
+    anchor_mode: str = "utm_grid"
+    """``"utm_grid"`` or ``"tangent_plane"``."""
+
+    anchor_lat: float = 0.0
+    """WGS84 latitude of the anchor point (degrees)."""
+
+    anchor_lon: float = 0.0
+    """WGS84 longitude of the anchor point (degrees)."""
+
+    anchor_ele: float = 0.0
+    """Elevation at the anchor point (metres, default 0).
+
+    MAP_SPEC §3 calls this ``anchorHeight``; same concept, different key name.
+    For ``auto_center`` PCD imports this is the WGS84 altitude of the ground
+    plane if known (otherwise 0).
+    """
+
+    utm_zone: int | None = None
+    """UTM zone number (1–60).  Only meaningful for ``utm_grid`` mode."""
+
+    utm_hemisphere: str | None = None
+    """``"N"`` or ``"S"``.  Only meaningful for ``utm_grid`` mode."""
+
+    z_shift: float | None = None
+    """Z offset (metres) subtracted from every point during ``auto_center``
+    import (including the reproject-into-existing-frame branch) so the ground
+    surface lands at Z=0.  ``None`` when no shift was applied (or the import
+    mode is not ``auto_center``).  Recorded so the original Z can be
+    recovered: ``z_original = z_local + z_shift`` — the Lanelet2 export
+    applies exactly that to ``ele``."""
+
+    mgrs_grid: str | None = None
+    """MGRS 100 km grid square (e.g. ``"54SVE"``).  ``mgrs_grid`` mode only."""
+
+    source: str | None = None
+    """Provenance — which importer stamped this origin (e.g.
+    ``"pcd_importer.auto_center"``, ``"osm_importer"``)."""
+
+    # ------------------------------------------------------------------
+    # Derived
+    # ------------------------------------------------------------------
+
+    @property
+    def grid_reference(self) -> str:
+        """Human-readable MGRS grid reference for this site origin.
+
+        Returns the MGRS grid zone designator + 100 km square (e.g.
+        ``"54S VE"``) for ``tangent_plane`` and ``utm_grid`` modes.
+        Returns ``"Local"`` for ``local`` or ``auto_center`` modes
+        (not yet georeferenced).
+        """
+        if self.anchor_mode in ("local", "auto_center"):
+            return "Local"
+        if self.anchor_lat == 0.0 and self.anchor_lon == 0.0:
+            return "Local"
+        if self.mgrs_grid:
+            return self.mgrs_grid
+        return _latlon_to_grid_name(self.anchor_lat, self.anchor_lon)
+
+    # ------------------------------------------------------------------
+    # customLayerData I/O (same pattern as map_version.py)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_layer(cls, root_layer) -> "SiteOrigin":
+        """Read site origin from a root layer's ``customLayerData``.
+
+        Returns a ``SiteOrigin`` with defaults for any missing keys.
+        *root_layer* is any object carrying ``customLayerData`` (an
+        ``Sdf.Layer`` in-host).
+        """
+        cld = root_layer.customLayerData
+        return cls(
+            anchor_mode=cld.get(_KEY_ANCHOR_MODE, "utm_grid"),
+            anchor_lat=float(cld.get(_KEY_ANCHOR_LAT, 0.0)),
+            anchor_lon=float(cld.get(_KEY_ANCHOR_LON, 0.0)),
+            anchor_ele=float(cld.get(_KEY_ANCHOR_ELE, 0.0)),
+            utm_zone=_opt_int(cld.get(_KEY_UTM_ZONE)),
+            utm_hemisphere=cld.get(_KEY_UTM_HEMISPHERE),
+            z_shift=_opt_float(cld.get(_KEY_Z_SHIFT)),
+            mgrs_grid=cld.get(_KEY_MGRS_GRID),
+            source=cld.get(_KEY_SOURCE),
+        )
+
+    def write_to_layer(self, root_layer) -> None:
+        """Write (merge) site origin into the root layer's ``customLayerData``.
+
+        Existing keys not in the site origin block are left untouched.
+        Optional fields (``utm_zone``, ``utm_hemisphere``, ``z_shift``,
+        ``mgrs_grid``, ``source``) are only written when set.
+        """
+        cld = dict(root_layer.customLayerData)  # copy — preserves other keys
+        cld[_KEY_ANCHOR_MODE] = self.anchor_mode
+        cld[_KEY_ANCHOR_LAT] = self.anchor_lat
+        cld[_KEY_ANCHOR_LON] = self.anchor_lon
+        cld[_KEY_ANCHOR_ELE] = self.anchor_ele
+        if self.utm_zone is not None:
+            cld[_KEY_UTM_ZONE] = self.utm_zone
+        else:
+            cld.pop(_KEY_UTM_ZONE, None)
+        if self.utm_hemisphere is not None:
+            cld[_KEY_UTM_HEMISPHERE] = self.utm_hemisphere
+        else:
+            cld.pop(_KEY_UTM_HEMISPHERE, None)
+        if self.z_shift is not None:
+            cld[_KEY_Z_SHIFT] = self.z_shift
+        else:
+            cld.pop(_KEY_Z_SHIFT, None)
+        # Auto-compute and persist the MGRS grid name when we have a
+        # georeference but no stored grid.  The grid name is a stable
+        # function of lat/lon — computing it once at write time makes it
+        # visible in the Property Inspector without cluttering the status bar.
+        mgrs = self.mgrs_grid
+        if not mgrs and self.anchor_mode not in ("local", "auto_center"):
+            if self.anchor_lat != 0.0 or self.anchor_lon != 0.0:
+                mgrs = self.grid_reference
+                self.mgrs_grid = mgrs
+        if mgrs:
+            cld[_KEY_MGRS_GRID] = mgrs
+        else:
+            cld.pop(_KEY_MGRS_GRID, None)
+        if self.source is not None:
+            cld[_KEY_SOURCE] = self.source
+        else:
+            cld.pop(_KEY_SOURCE, None)
+        root_layer.customLayerData = cld
+
+    # ------------------------------------------------------------------
+    # Factories
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_bbox(
+        cls,
+        bbox: tuple[float, float, float, float],
+        *,
+        mode: str = "utm_grid",
+    ) -> "SiteOrigin":
+        """Create a SiteOrigin from a WGS84 bounding box.
+
+        Args:
+            bbox: ``(min_lat, min_lon, max_lat, max_lon)``.
+            mode: ``"utm_grid"`` (default) or ``"tangent_plane"``.
+
+        Returns:
+            A new ``SiteOrigin`` with the anchor point and metadata set.
+        """
+        south, west, north, east = bbox
+        center_lat = (south + north) / 2.0
+        center_lon = (west + east) / 2.0
+
+        if mode == "tangent_plane":
+            return cls(
+                anchor_mode="tangent_plane",
+                anchor_lat=center_lat,   # centroid → small symmetric coords
+                anchor_lon=center_lon,   # centroid
+                anchor_ele=0.0,
+            )
+
+        # utm_grid mode (default)
+        zone = _utm_zone_from_lon(center_lon)
+        hemisphere = "N" if center_lat >= 0 else "S"
+
+        # Warn if the bbox spans > 3° from the central meridian of the
+        # detected zone (i.e. it crosses into a neighbouring zone).
+        central_meridian = zone * 6 - 183  # central meridian of zone
+        lon_span = east - west
+        if abs(west - central_meridian) > 3.0 + lon_span or abs(east - central_meridian) > 3.0:
+            _log.warning(
+                "Bbox [%.4f, %.4f, %.4f, %.4f] may straddle UTM zone %d "
+                "boundary (central meridian %.0f°).  Consider "
+                "anchor_mode='tangent_plane' instead.",
+                south, west, north, east, zone, central_meridian,
+            )
+
+        return cls(
+            anchor_mode="utm_grid",
+            anchor_lat=center_lat,
+            anchor_lon=center_lon,
+            anchor_ele=0.0,
+            utm_zone=zone,
+            utm_hemisphere=hemisphere,
+        )
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def utm_epsg(self) -> int | None:
+        """EPSG code for the UTM CRS, or ``None`` for tangent_plane mode.
+
+        North: ``326{zone}``, South: ``327{zone}``.
+        """
+        if self.utm_zone is None:
+            return None
+        base = 32600 if self.utm_hemisphere == "N" else 32700
+        return base + self.utm_zone
+
+
+# -- Import identity (§4.1 of the navigation schema) ----------------------
+
+#: Element separator — a ``sourceKey`` may contain neither it nor the
+#: array separator.
+SOURCE_ELEMENT_SEP = "/"
+_PREFIX_CHARS = re.compile(r"[^a-z0-9]+")
+
+
+def imported_source_id(source_key: str, kind: str, source_id: int | str) -> str:
+    """``<sourceKey>/<kind>/<id>`` — an imported entity's origin assertion.
+
+    *kind* is the **source's own** kind (``node`` / ``way`` / ``relation`` /
+    ``file`` / ``tile``),
+    never an IR class — the first segment is the discriminator between the
+    two vocabularies, the middle one deliberately differs (§4.1).
+    """
+    return f"{source_key}{SOURCE_ELEMENT_SEP}{kind}{SOURCE_ELEMENT_SEP}{source_id}"
+
+
+def source_key_for(source_path: str) -> str:
+    """Derive the slug a source file registers under (§4.1).
+
+    Contains neither ``/`` nor ``;``, and is never 32 lowercase hex — that
+    shape is the Site's, and the first segment is the discriminator.
+    """
+    import os
+
+    stem = os.path.splitext(os.path.basename(str(source_path)))[0]
+    slug = _PREFIX_CHARS.sub("-", stem.lower()).strip("-") or "source"
+    if len(slug) == 32 and all(c in "0123456789abcdef" for c in slug):
+        slug = f"{slug}-1"
+    return slug

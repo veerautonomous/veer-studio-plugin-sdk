@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 60 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 70 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -385,6 +385,29 @@ Write several sources as *one* merged cloud unit.  *tiles* is
 @property
 def plugin_id(self) -> str                             # set by registry
 ```
+
+### Import vocabulary (contract)
+
+Everything an `import_file` implementation stamps or derives ships in the
+package — these run *inside* the door, where there is no ToolContext, so
+they are module-level names, never `ctx.` capabilities:
+
+| Name | What it is |
+|---|---|
+| `ATTR_IMPORT_MODE` | `atlas:importMode` token — how the source was placed (`auto_center`, `declared_origin`, …) |
+| `ATTR_SOURCE_CRS` | `atlas:sourceCoordinateSystem` string (e.g. `"MGRS_local_metres:54SVE"`) |
+| `ATTR_IMPORT_TRANSFORM` | `atlas:importTransform` `Matrix4d` — source→stage, baked into the points |
+| `SiteOrigin` | the declared-origin record: fields `anchor_mode` / `anchor_lat` / `anchor_lon` / `anchor_ele` / `utm_zone` / `utm_hemisphere` / `z_shift` / `mgrs_grid` / `source`; `SiteOrigin.from_layer(...)` / `.write_to_layer(...)` take any object carrying `customLayerData`; `.grid_reference` and `.utm_epsg` derive |
+| `source_key_for(path)` | the slug a source file registers under — no `/`, no `;`, never bare 32-hex |
+| `imported_source_id(source_key, kind, id)` | `<sourceKey>/<kind>/<id>` — one provenance assertion (kinds: `node`, `way`, `relation`, `file`, `tile`) |
+| `pointcloud_frame_path(index)` | `<site>/Reality/PointClouds/PointCloudFrame_NNN` — the tile frame an import authors |
+| `color_field_prim_path(index)` | `<site>/Reality/ColorFields/ColorField_<N>` — one colour chunk |
+
+The two roots those helpers resolve through — `pointclouds_root()`,
+`colorfields_root()` — are contract too (§6 Project roots).  In-host,
+`from core.contexts import SiteOrigin, ATTR_IMPORT_MODE, …` still works:
+the definitions live with the static import vocabulary in `core.ports`
+and the original modules re-import them.
 
 ---
 
@@ -1038,7 +1061,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-60-name-contract) records |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-70-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1596,7 +1619,7 @@ for internal use).
 
 Reachable as `from veer_plugin_sdk import ...`.  Most of this section is
 the *supporting* tier — shipped and versioned with the package but not
-pinned by the 60-name manifest.  The contract-tier members: the two
+pinned by the 70-name manifest.  The contract-tier members: the two
 [projection doors](#projection-doors-contract-tier) and the
 [plugin data root](#plugin-data-root-contract-tier) (sdk#11),
 `GEOMETRIC_ROLES`, and the twelve [project roots](#project-roots).
@@ -1663,12 +1686,12 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 60-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 70-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
 
-### CloudUnit (in the 60-name contract)
+### CloudUnit (in the 70-name contract)
 
 `ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
 cloud, importable as `from veer_plugin_sdk import CloudUnit`:
@@ -1696,7 +1719,7 @@ any other `atlas:*` attribute off a frame uses the same helper.
 The standard prim roots — the same strings the host's own tools use,
 evaluated at call time so they follow the open stage.  Standalone (no
 host on `sys.path`) they resolve against `/Site_Untitled`, the root
-`testing.create_stage()` builds.  All twelve are in the contract (§8);
+`testing.create_stage()` builds.  All sixteen are in the contract (§8);
 never hardcode a site path, and never reach for `core.paths` — it only
 exists inside a host checkout.
 
@@ -1715,7 +1738,15 @@ reference_water_root()
 reference_landuse_root()
 reference_barriers_root()
 reference_other_root()
+pointclouds_root()        # <site>/Reality/PointClouds
+colorfields_root()        # <site>/Reality/ColorFields
 ```
+
+Two frame-path helpers ride the same way: `pointcloud_frame_path(index)`
+(`PointCloudFrame_NNN` under the point-clouds root) and
+`color_field_prim_path(index)` (`ColorField_<N>` under the colour-fields
+root) — documented with the import vocabulary in
+[IFileImporter](#ifileimporter).
 
 ---
 
@@ -1856,15 +1887,16 @@ behaviour.
 
 # 8. Exported-name index
 
-## Contract (60 names, pinned by `export-manifest.json`)
+## Contract (70 names, pinned by `export-manifest.json`)
 
-**Ports & metadata (22):**
+**Ports & metadata (28):**
+`ATTR_IMPORT_MODE`, `ATTR_IMPORT_TRANSFORM`, `ATTR_SOURCE_CRS`,
 `BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
 `Diagnostic`, `ExportReport`, `GEOMETRIC_ROLES`, `IExporter`,
 `IFileImporter`, `IFusionPlugin`, `IIntegrationPlugin`, `IPanelFactory`,
 `IPluginPreferences`, `IStageContributor`, `IToolProvider`, `IValidator`,
-`JobSpec`, `OverlayLayer`, `PluginMeta`, `Severity`, `ToolResult`,
-`ValidationReport`
+`JobSpec`, `OverlayLayer`, `PluginMeta`, `Severity`, `SiteOrigin`,
+`ToolResult`, `ValidationReport`, `imported_source_id`, `source_key_for`
 
 **Contexts (7):**
 `DerivedCloudHandle`, `EditorContext`, `PanelContext`,
@@ -1881,8 +1913,10 @@ behaviour.
 `LaneletDeleted`, `RegulatoryElementDeleted`, `AreaCreated`,
 `LiftSessionStarted`, `LiftSessionEnded`
 
-**Paths (12):**
-`assets_root`, `cameras_root`, `navigation_root`, `reality_root`,
+**Paths (16):**
+`assets_root`, `cameras_root`, `color_field_prim_path`,
+`colorfields_root`, `navigation_root`, `pointcloud_frame_path`,
+`pointclouds_root`, `reality_root`,
 `reference_barriers_root`, `reference_buildings_root`,
 `reference_landuse_root`, `reference_other_root`, `reference_root`,
 `reference_roads_root`, `reference_satellite_root`, `reference_water_root`

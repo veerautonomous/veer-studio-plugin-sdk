@@ -16,6 +16,9 @@ import veer_plugin_sdk
 
 
 PORTS = [
+    "ATTR_IMPORT_MODE",
+    "ATTR_IMPORT_TRANSFORM",
+    "ATTR_SOURCE_CRS",
     "BaseOverlayRenderer",
     "CloudUnit",
     "CreationSession",
@@ -36,8 +39,11 @@ PORTS = [
     "OverlayLayer",
     "PluginMeta",
     "Severity",
+    "SiteOrigin",
     "ToolResult",
     "ValidationReport",
+    "imported_source_id",
+    "source_key_for",
 ]
 CONTEXTS = [
     "DerivedCloudHandle",
@@ -74,7 +80,11 @@ EVENTS = [
 PATHS = [
     "assets_root",
     "cameras_root",
+    "color_field_prim_path",
+    "colorfields_root",
     "navigation_root",
+    "pointcloud_frame_path",
+    "pointclouds_root",
     "reality_root",
     "reference_barriers_root",
     "reference_buildings_root",
