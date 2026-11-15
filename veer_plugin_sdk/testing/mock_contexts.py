@@ -83,6 +83,7 @@ def tool_context(**overrides) -> ToolContext:
           stays ``"en"``
         - *notify*: silent no-ops — ``register_overlay``,
           ``unregister_overlay``, ``request_cursor``, ``release_cursor``,
+          ``request_viewport_repaint``,
           ``show_status``, ``set_tool_hints``, ``show_progress``,
           ``hide_progress``, ``request_tree_refresh``,
           ``on_selection_changed``, ``set_selection_set``,
@@ -206,6 +207,7 @@ def tool_context(**overrides) -> ToolContext:
         "unregister_overlay": _noop,
         "request_cursor": _noop,
         "release_cursor": _noop,
+        "request_viewport_repaint": _noop,
         "show_status": _noop,
         "set_tool_hints": _noop,
         "show_progress": _noop,

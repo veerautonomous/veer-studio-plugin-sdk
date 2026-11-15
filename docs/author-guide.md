@@ -402,7 +402,8 @@ Notes visible in the example:
 
 - draw previews through the **overlay stack**, set the cursor through
   **`request_cursor`/`release_cursor`**, message through
-  **`show_status`/`set_tool_hints`** — never poke the widget tree;
+  **`show_status`/`set_tool_hints`**, ask for a repaint through
+  **`request_viewport_repaint`** — never poke the widget tree;
 - `event.world_position` may be `None` (no ground intersection);
 - ignore `event.is_auto_repeat` key events in hold-to-move behaviour.
 

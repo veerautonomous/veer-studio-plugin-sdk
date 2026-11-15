@@ -196,6 +196,12 @@ class ToolContext:
     # Set by the framework — tools can use this to register overlay rendering.
     viewport: object = None
 
+    # Request a viewport repaint after overlay/state changes the host cannot
+    # observe (your renderer's output is stale).  The sanctioned door —
+    # never poke `viewport` itself (veer/veer-studio-plugin-sdk#7).
+    # callable() -> None
+    request_viewport_repaint: Optional[Callable[[], None]] = None
+
     # Phase 4: Register an OverlayRenderer on the viewport's overlay stack.
     # callable(renderer: OverlayRenderer) -> None
     register_overlay: Optional[Callable[[Any], None]] = None
@@ -811,7 +817,9 @@ class StageManagerInterface(ABC):
 
         Args:
             atlas_type_name: String name of the AtlasType enum member
-                (e.g. ``"TRAFFIC_LIGHT"``).
+                (e.g. ``"BUILDING"``).  Navigation regulatory elements
+                (traffic lights, stop signs, …) are not Atlas objects —
+                create those through the ``nav`` library instead.
             position: ``Gf.Vec3d`` world position for the prim.
             **kwargs: Additional attributes forwarded to
                 ``core.atlas_schema.create_atlas_prim``.
@@ -983,47 +991,6 @@ class StageManagerInterface(ABC):
         Returns ``True`` if the prim left composition, ``False`` if the
         prim doesn't exist or no layer could be edited.
         """
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ---------------------------------------------------------------------------

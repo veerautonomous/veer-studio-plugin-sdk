@@ -1104,6 +1104,7 @@ register_overlay(renderer)     -> None     # add to the viewport overlay stack
 unregister_overlay(renderer)  -> None     # remove by renderer
 request_cursor(state_name)     -> None     # e.g. "crosshair"
 release_cursor()               -> None     # release your cursor request
+request_viewport_repaint()     -> None     # repaint after your overlay/state changes
 show_status(message, timeout_ms=3000)      # transient status-bar message
 set_tool_hints(text)           -> None     # persistent hints ("" clears)
 show_progress(text, value, max)            # status-bar zone 5
@@ -1117,6 +1118,9 @@ clear_auxiliary_dock()          -> None
 request_deactivate()            -> None     # ask the host to deactivate this tool
 request_tree_refresh()          -> None     # scene tree picks up stage changes now
 ```
+
+`viewport` is the host's widget handle — **never touch it**; ask for a
+repaint through `request_viewport_repaint()`.  It is `None` in unit tests.
 
 ### Menus
 
@@ -1646,7 +1650,7 @@ Base: `stage=create_stage()` (in-memory, site root + assets),
 |---|---|
 | Queries | `has_ground_mesh → False`, `has_ground_mesh_at → True` (the host returns `True` when no mesh exists), `get_ground_mesh_height → None`, `build_ground_mesh_cache → None`, `cloud_units → []`, `get_ground_height → 0.0`, `find_nearest_prim → None`, `find_prims_in_radius → []`, `screen_to_world → (None, None)`, `get_selection_set → []`, `get_world_center → None`, `is_atlas_object / is_navigable_target → False`, `get_atlas_type / get_atlas_object_id / get_assembly_terminals → None`, `snapshot_camera → {}`, `plugin_data_dir` → one fresh temp directory **per context** (the same path on every call, as the host requires) |
 | i18n | `translate(msgctxt, text) → text` (source text; `current_locale` stays `"en"`) |
-| Notify (no-ops) | `register_overlay`, `unregister_overlay`, `request_cursor`, `release_cursor`, `show_status`, `set_tool_hints`, `show_progress`, `hide_progress`, `request_tree_refresh`, `on_selection_changed`, `set_selection_set`, `set_auxiliary_dock`, `clear_auxiliary_dock`, `request_deactivate`, `restore_camera`, `frame_prim`, `register_prim_menu_entry`, `register_edit_session_entry` |
+| Notify (no-ops) | `register_overlay`, `unregister_overlay`, `request_cursor`, `release_cursor`, `request_viewport_repaint`, `show_status`, `set_tool_hints`, `show_progress`, `hide_progress`, `request_tree_refresh`, `on_selection_changed`, `set_selection_set`, `set_auxiliary_dock`, `clear_auxiliary_dock`, `request_deactivate`, `restore_camera`, `frame_prim`, `register_prim_menu_entry`, `register_edit_session_entry` |
 | Write (left `None`) | `import_file`, `push_undo`, `create_edit_scope`, `create_undo_checkpoint`, `create_multi_undo_checkpoint`, `regenerate_meshes`, `regenerate_mesh_in_job`, `upsert_point_cloud_tile`, `consolidate_point_cloud_run`, `discard_point_cloud_run` |
 | Host objects (left `None`) | `viewport`, `gizmo_manager`, `jobs` |
 
