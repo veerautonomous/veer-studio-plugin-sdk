@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 56 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 57 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -1038,7 +1038,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-56-name-contract) records |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-57-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1097,6 +1097,39 @@ discard_point_cloud_run: (layer_name) -> count
 ```
 Remove every tile frame of *layer_name* (failed/cancelled run cleanup).
 Other runs untouched.
+
+### Derived-cloud replace doors
+
+```python
+derive_cloud: (source, points, *, tool_id, name=None, display_name=None,
+               parameters=None, colors=None) -> DerivedCloudHandle
+revert_derived_clouds: (handles) -> None
+```
+
+`derive_cloud` is the one-call replacement for a cloud's points: it
+births a derived unit from *points*, retires the source (the derived
+unit becomes its lineage's current), and mutes the source for the
+session so the viewport drops it at once.  *source* is a frame path or a
+`CloudUnit`; *points* are in the source's own frame (invert the frame's
+world transform first — `UsdGeom.XformCache`, as every in-host caller
+does).  *tool_id* stamps provenance on the derived frame.  *colors*,
+when given, are per-point; a source with per-point colours and a write
+that brings none raises `ValueError` rather than silently dropping them.
+
+Draft resolution, the `Reality/PointClouds` permission gate
+(`LayerPermissionError` without the category) and the draft-aware
+promote resolver all run inside — you never open `edit_target_scope`
+for this write.  Returns a `DerivedCloudHandle`, a frozen record:
+`source_path`, `derived_path`, and `prior_visibility` (the source's
+session-visibility capture — treat it as opaque).
+
+`revert_derived_clouds(handles)` takes a batch of handles back in the
+order the domain requires: unmute every source first (a mute restores
+only while its prim composes), delete every derived unit, then make the
+entry clouds current again — a source the batch itself derived is
+already gone, so it is not re-promoted.  Handles are single-use.
+
+Both are write doors: `None` in `tool_context()`.
 
 ### Overlays, cursor & status UI
 
@@ -1562,7 +1595,7 @@ for internal use).
 # 6. Module-level helpers
 
 Reachable as `from veer_plugin_sdk import ...` (supporting tier — not in
-the 55-name manifest, but shipped and versioned with it).
+the 57-name manifest, but shipped and versioned with it).
 
 > **Where did `latlon_to_local_enu` / `plugin_data_dir` go?**  They — and
 > `read_osm_nodes` / `batch_latlon_to_local_enu` — were briefly importable
@@ -1595,12 +1628,12 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 56-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 57-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
 
-### CloudUnit (in the 56-name contract)
+### CloudUnit (in the 57-name contract)
 
 `ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
 cloud, importable as `from veer_plugin_sdk import CloudUnit`:
@@ -1701,7 +1734,7 @@ Base: `stage=create_stage()` (in-memory, site root + assets),
 | Queries | `has_ground_mesh → False`, `has_ground_mesh_at → True` (the host returns `True` when no mesh exists), `get_ground_mesh_height → None`, `build_ground_mesh_cache → None`, `cloud_units → []`, `get_ground_height → 0.0`, `find_nearest_prim → None`, `find_prims_in_radius → []`, `screen_to_world → (None, None)`, `get_selection_set → []`, `get_world_center → None`, `is_atlas_object / is_navigable_target → False`, `get_atlas_type / get_atlas_object_id / get_assembly_terminals → None`, `snapshot_camera → {}`, `plugin_data_dir` → one fresh temp directory **per context** (the same path on every call, as the host requires) |
 | i18n | `translate(msgctxt, text) → text` (source text; `current_locale` stays `"en"`) |
 | Notify (no-ops) | `register_overlay`, `unregister_overlay`, `request_cursor`, `release_cursor`, `request_viewport_repaint`, `show_status`, `set_tool_hints`, `show_progress`, `hide_progress`, `request_tree_refresh`, `on_selection_changed`, `set_selection_set`, `set_auxiliary_dock`, `clear_auxiliary_dock`, `request_deactivate`, `restore_camera`, `frame_prim`, `register_prim_menu_entry`, `register_edit_session_entry` |
-| Write (left `None`) | `import_file`, `push_undo`, `create_edit_scope`, `create_undo_checkpoint`, `create_multi_undo_checkpoint`, `regenerate_meshes`, `regenerate_mesh_in_job`, `upsert_point_cloud_tile`, `consolidate_point_cloud_run`, `discard_point_cloud_run` |
+| Write (left `None`) | `import_file`, `push_undo`, `create_edit_scope`, `create_undo_checkpoint`, `create_multi_undo_checkpoint`, `regenerate_meshes`, `regenerate_mesh_in_job`, `upsert_point_cloud_tile`, `consolidate_point_cloud_run`, `discard_point_cloud_run`, `derive_cloud`, `revert_derived_clouds` |
 | Host objects (left `None`) | `viewport`, `gizmo_manager`, `jobs` |
 
 `latlon_to_local_enu` raises `NotImplementedError` rather than returning a
@@ -1788,7 +1821,7 @@ behaviour.
 
 # 8. Exported-name index
 
-## Contract (56 names, pinned by `export-manifest.json`)
+## Contract (57 names, pinned by `export-manifest.json`)
 
 **Ports & metadata (22):**
 `BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
@@ -1798,9 +1831,10 @@ behaviour.
 `JobSpec`, `OverlayLayer`, `PluginMeta`, `Severity`, `ToolResult`,
 `ValidationReport`
 
-**Contexts (6):**
-`EditorContext`, `PanelContext`, `StageManagerInterface`,
-`StageMutationContext`, `ToolContext`, `ToolEvent`
+**Contexts (7):**
+`DerivedCloudHandle`, `EditorContext`, `PanelContext`,
+`StageManagerInterface`, `StageMutationContext`, `ToolContext`,
+`ToolEvent`
 
 **Events (16):**
 `DomainEvent`, `ToolActivated`, `ToolDeactivated`, `ToolModeChanged`,

@@ -37,6 +37,7 @@ PORTS = [
     "ValidationReport",
 ]
 CONTEXTS = [
+    "DerivedCloudHandle",
     "EditorContext",
     "PanelContext",
     "StageManagerInterface",

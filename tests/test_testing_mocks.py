@@ -41,6 +41,8 @@ WRITE_DOORS = frozenset({
     "upsert_point_cloud_tile",
     "consolidate_point_cloud_run",
     "discard_point_cloud_run",
+    "derive_cloud",
+    "revert_derived_clouds",
 })
 
 

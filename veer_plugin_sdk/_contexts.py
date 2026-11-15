@@ -40,6 +40,23 @@ class LayerPermissionError(PermissionError):
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class DerivedCloudHandle:
+    """What one ``ToolContext.derive_cloud`` write left behind — everything
+    ``revert_derived_clouds`` needs to take it back
+    (veer/veer-studio-plugin-sdk#4).
+
+    Public: *source_path* (the retired source's frame) and *derived_path*
+    (the birthed unit).  *prior_visibility* is the source's session-layer
+    capture from the mute — treat it as opaque; revert restores it.
+    Handles are single-use: a second revert of the same handle finds the
+    work already undone.
+    """
+    source_path: str
+    derived_path: str
+    prior_visibility: Optional[str] = None
+
+
 @dataclass
 class ToolContext:
     """Bounded API surface for tool execution.
@@ -191,6 +208,28 @@ class ToolContext:
     # of ``layer_name`` and returns the count.  ``discard_point_cloud_run(
     # layer_name)``.  Other runs are untouched.  Lands in the run's draft.
     discard_point_cloud_run: Optional[Callable[[str], Any]] = None
+
+    # Derived-cloud replace door (veer/veer-studio-plugin-sdk#4): birth a
+    # derived unit from *points*, retire the source (promote makes the
+    # derived unit current), mute the source for the session — one call.
+    # Draft resolution, the ``Reality/PointClouds`` permission gate and the
+    # draft-aware promote resolver all live inside; the caller never opens
+    # ``edit_target_scope`` itself.
+    # ``derive_cloud(source, points, *, tool_id, name=None, display_name=
+    # None, parameters=None, colors=None) -> DerivedCloudHandle``
+    # *source* is a frame path or ``CloudUnit``; *points* are in the
+    # source's frame (convert stage coordinates first).  Raises
+    # ``LayerPermissionError`` without the write category; ``ValueError``
+    # when the source has per-point colours and *colors* brings none.
+    derive_cloud: Optional[Callable[..., "DerivedCloudHandle"]] = None
+
+    # Batch revert for the door above (same ticket): unmute every source
+    # first (a mute restores only while its prim composes), delete every
+    # derived unit, then re-promote the entry clouds — a source that is
+    # itself derived within *handles* is already gone.  Handles are
+    # single-use.
+    # ``revert_derived_clouds(handles: Sequence[DerivedCloudHandle]) -> None``
+    revert_derived_clouds: Optional[Callable[[Sequence["DerivedCloudHandle"]], None]] = None
 
     # Reference to the HydraViewport QOpenGLWidget (for overlay callbacks).
     # Set by the framework — tools can use this to register overlay rendering.

@@ -74,6 +74,7 @@ __all__ = [
     'Severity',
     'ToolResult',
     'ValidationReport',
+    'DerivedCloudHandle',
     'EditorContext',
     'PanelContext',
     'StageManagerInterface',

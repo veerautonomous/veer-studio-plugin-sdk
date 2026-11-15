@@ -94,7 +94,8 @@ def tool_context(**overrides) -> ToolContext:
           ``push_undo``, ``create_edit_scope``, ``create_undo_checkpoint``,
           ``create_multi_undo_checkpoint``, ``regenerate_meshes``,
           ``regenerate_mesh_in_job``, ``upsert_point_cloud_tile``,
-          ``consolidate_point_cloud_run``, ``discard_point_cloud_run``
+          ``consolidate_point_cloud_run``, ``discard_point_cloud_run``,
+          ``derive_cloud``, ``revert_derived_clouds``
         - ``latlon_to_local_enu`` raises :class:`NotImplementedError` — the
           projection door is ruled separately (gitea
           ``veer-studio-plugin-sdk#11``); override it with your projection

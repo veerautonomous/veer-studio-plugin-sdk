@@ -5,8 +5,8 @@ the Veer Studio source tree: the port ABCs, the bounded-context types, the
 event bus, and a testing toolkit (mock contexts, mock stage manager, mock USD
 stage) — everything needed to write and CI-test a plugin standalone.
 
-- **Version:** `1.4.0` — generated from Veer Studio source
-  `b8d5fe28298409d2a13137a14a6684b17a451d07`
+- **Version:** `1.5.0` — generated from Veer Studio source
+  `507a49eaae8e6ccad041ecc3a8049557a04ee793`
 - **Docs:** [author guide](docs/author-guide.md) (walkthrough) ·
   [API reference](docs/api-reference.md) (classes, methods, data structures)
 - **Issues:** report SDK problems here
@@ -19,13 +19,13 @@ stage) — everything needed to write and CI-test a plugin standalone.
 From a release tag (recommended — the wheel is also attached to the release):
 
 ```bash
-pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.4.0"
+pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.5.0"
 ```
 
 For plugin tests that build USD stages, add the testing extra:
 
 ```bash
-pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.4.0"
+pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.5.0"
 ```
 
 ## Quickstart
@@ -75,7 +75,7 @@ the [API reference](docs/api-reference.md) for every class and method.
 
 - It does **not** run Veer Studio, render a viewport, or ship the
   application — plugins are loadable adapters, not apps.
-- It does **not** include Veer Studio internals; the contract is the 56
+- It does **not** include Veer Studio internals; the contract is the 57
   names in `export-manifest.json`, plus the supporting types their
   signatures reference (both documented in the
   [API reference](docs/api-reference.md#8-exported-name-index)).

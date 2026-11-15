@@ -19,14 +19,14 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The stability contract is 56 names — the list in `export-manifest.json`,
+The stability contract is 57 names — the list in `export-manifest.json`,
 asserted by `tests/test_surface.py`, exactly matching
 `veer_plugin_sdk.__all__`.  Four groups:
 
 | Group | Names | What they are |
 |---|---|---|
 | Ports (22) | `IToolProvider`, `IFileImporter`, `CloudUnit`, … | The ABCs your plugin classes implement — plus `CloudUnit`, the record `ctx.cloud_units()` returns |
-| Contexts (6) | `ToolContext`, `PanelContext`, `StageManagerInterface`, … | The capabilities the host hands you at runtime |
+| Contexts (7) | `ToolContext`, `PanelContext`, `StageManagerInterface`, `DerivedCloudHandle`, … | The capabilities the host hands you at runtime |
 | Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
 | Paths (12) | `reference_roads_root`, `assets_root`, … | The standard project prim roots — never hardcode a site path |
 
@@ -468,6 +468,26 @@ Never write around the host.  The rules, in order of importance:
    writes in `with ctx.stage_pin_exempt():` (SDK 1.2.0) — the pin admits
    only the `JobSpec.plugin_id` that holds it; everyone else gets
    `StagePinnedError`.
+
+### Replacing a cloud's points
+
+A derived-cloud replacement — birth a new unit from *points*, retire the
+source, mute it for the session — is one door, not four host names:
+
+```python
+handle = ctx.derive_cloud(source.frame_path, local_points,
+                          tool_id="my.tool", display_name="Kept points",
+                          parameters={"box": [...]} , colors=rgb)
+# … later, the whole batch back:
+ctx.revert_derived_clouds(handles)
+```
+
+The door opens the edit-target scope itself (the same
+`Reality/PointClouds` permission gate), resolves the draft, and unmutes →
+deletes → re-promotes in the order a revert needs — the phase rules are
+on the [API reference](api-reference.md#derived-cloud-replace-doors).
+*points* are in the source's frame: convert stage coordinates first.
+Both doors are write doors — `None` in `tool_context()`.
 
 ### Permissions
 
