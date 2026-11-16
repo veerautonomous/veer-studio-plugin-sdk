@@ -25,7 +25,7 @@ asserted by `tests/test_surface.py`, exactly matching
 
 | Group | Names | What they are |
 |---|---|---|
-| Ports (28) | `IToolProvider`, `IFileImporter`, `CloudUnit`, `SiteOrigin`, … | The ABCs your plugin classes implement — plus `CloudUnit` (the `cloud_units()` record) and the import vocabulary (`SiteOrigin`, the `ATTR_IMPORT_*` stamps, the provenance helpers) |
+| Ports (29) | `IToolProvider`, `IFileImporter`, `CloudUnit`, `SiteOrigin`, `CURRENT_SDK_VERSION`, … | The ABCs your plugin classes implement — plus `CloudUnit` (the `cloud_units()` record), the import vocabulary (`SiteOrigin`, the `ATTR_IMPORT_*` stamps, the provenance helpers), and the accepted `sdkVersion` major |
 | Contexts (7) | `ToolContext`, `PanelContext`, `StageManagerInterface`, `DerivedCloudHandle`, … | The capabilities the host hands you at runtime |
 | Context-less doors (3) | `latlon_to_local_enu`, `batch_latlon_to_local_enu`, `plugin_data_dir` | The module-level doors for code that holds no context — an `import_file` body, a module-level event subscriber |
 | Events (16) | `DomainEvent`, `subscribe`, `WayDeleted`, … | The typed event bus you consume (never emit) |
@@ -255,7 +255,8 @@ anchor them.
 | You want to | Call |
 |---|---|
 | react to edits | `subscribe()` for `WayDeleted`, `NodesPruned`, `LaneletCommitted`, `LaneletDeleted`, `RegulatoryElementDeleted`, `AreaCreated`, `LiftSessionStarted` / `LiftSessionEnded` |
-| author or remove content | `ctx.edit_target_scope(<nav layer>)` + stage writes; `stage_manager.delete_prim(...)` for deletion |
+| read nav edits as they land | the navigation events above — the sanctioned signal for external plugins |
+| author nav prims (ways, lanelets) | **not published yet** — the host's nav-write door is host-internal; ask on the SDK tracker rather than hand-rolling `attr.Set()` on a way |
 | declare the right to write | `permissions.write: {"Navigation": "..."}` |
 | import OSM source data | an `IFileImporter` with `destination_category() -> "Navigation"`; stamp provenance inside `import_file` with `ATTR_IMPORT_MODE`, `SiteOrigin`, `source_key_for` — all importable from the package |
 | place geo coordinates | `ctx.latlon_to_local_enu(lat, lon, origin=ctx.stage_manager.read_site_origin())` — the origin is required; a project without one raises |
@@ -623,8 +624,8 @@ Useful properties of the toolkit:
   0.0`); **notify** callbacks are silent no-ops (assert with your own
   spy if you need one); **write** doors stay `None` on purpose, so a
   unit test that reaches one fails loudly instead of writing.
-  `latlon_to_local_enu` raises `NotImplementedError` rather than
-  guessing a projection, and `plugin_data_dir` is one fresh temp
+  `latlon_to_local_enu` binds the **real** pyproj-backed projection
+  (shipped with the package), and `plugin_data_dir` is one fresh temp
   directory per context (stable across calls, as the host requires).
   The full default table lives in the
   [API reference — testing toolkit](api-reference.md#7-testing-toolkit).

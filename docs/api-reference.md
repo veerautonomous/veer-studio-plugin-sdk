@@ -404,10 +404,9 @@ they are module-level names, never `ctx.` capabilities:
 | `color_field_prim_path(index)` | `<site>/Reality/ColorFields/ColorField_<N>` — one colour chunk |
 
 The two roots those helpers resolve through — `pointclouds_root()`,
-`colorfields_root()` — are contract too (§6 Project roots).  In-host,
-`from core.contexts import SiteOrigin, ATTR_IMPORT_MODE, …` still works:
-the definitions live with the static import vocabulary in `core.ports`
-and the original modules re-import them.
+`colorfields_root()` — are contract too (§6 Project roots).  In-host the
+original host modules re-import these definitions from `core.ports`, so
+existing first-party import lines keep working unchanged.
 
 ---
 
@@ -1622,14 +1621,13 @@ the *supporting* tier — shipped and versioned with the package but not
 pinned by the 71-name manifest.  The contract-tier members: the two
 [projection doors](#projection-doors-contract-tier) and the
 [plugin data root](#plugin-data-root-contract-tier) (sdk#11),
-`CURRENT_SDK_VERSION`, `GEOMETRIC_ROLES`, and the twelve [project roots](#project-roots).
+`CURRENT_SDK_VERSION`, `GEOMETRIC_ROLES`, and the [project roots and frame-path helpers](#project-roots).
 
 > **Back from excision, with implementations.**  `latlon_to_local_enu`,
 > `batch_latlon_to_local_enu`, and `plugin_data_dir` were excised from the
-> package in [veer-studio-plugin-sdk#2](http://gitea.local/veer/veer-studio-plugin-sdk/issues/2)
-> as importable-but-unreachable forwarders (their implementations lived in
-> the host); [veer-studio-plugin-sdk#11](http://gitea.local/veer/veer-studio-plugin-sdk/issues/11)
-> re-ships them with implementations that run standalone.  They serve the
+> package as importable-but-unreachable forwarders (their implementations
+> lived in the host); a later release re-ships them with implementations
+> that run standalone.  They serve the
 > **context-less paths** — an `IFileImporter.import_file` body and a
 > module-level event subscriber hold no `ToolContext`, so the context
 > callbacks (`ctx.latlon_to_local_enu(...)`, `ctx.plugin_data_dir()`) cannot
@@ -1837,9 +1835,9 @@ Base: `stage=create_stage()` (in-memory, site root + assets),
 | Write (left `None`) | `import_file`, `push_undo`, `create_edit_scope`, `create_undo_checkpoint`, `create_multi_undo_checkpoint`, `regenerate_meshes`, `regenerate_mesh_in_job`, `upsert_point_cloud_tile`, `consolidate_point_cloud_run`, `discard_point_cloud_run`, `derive_cloud`, `revert_derived_clouds` |
 | Host objects (left `None`) | `viewport`, `gizmo_manager`, `jobs` |
 
-`latlon_to_local_enu` raises `NotImplementedError` rather than returning a
-guess: the projection door is ruled separately, and a test that projects
-should override it with a real projection.
+`latlon_to_local_enu` binds the **real** pyproj-backed projection — the
+same implementation standalone and in-host — so a test that projects gets
+bit-identical numbers without a host checkout.
 
 ```python
 def panel_context(**overrides) -> PanelContext

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veer-studio-plugin-sdk"
-version = "1.8.0"
+version = "1.8.1"
 description = "Contract surface for writing Veer Studio plugins without the Veer Studio source tree"
 readme = "README.md"
 license = "Apache-2.0"
