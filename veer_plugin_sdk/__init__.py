@@ -72,6 +72,7 @@ __all__ = [
     'ATTR_SOURCE_CRS',
     'BaseOverlayRenderer',
     'CloudUnit',
+    'CURRENT_SDK_VERSION',
     'CreationSession',
     'CreationVerb',
     'Diagnostic',

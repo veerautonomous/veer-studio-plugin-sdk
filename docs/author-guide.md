@@ -19,7 +19,7 @@ Everything the host promises you is exported from the top-level package:
 from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult, subscribe
 ```
 
-The stability contract is 70 names — the list in `export-manifest.json`,
+The stability contract is 71 names — the list in `export-manifest.json`,
 asserted by `tests/test_surface.py`, exactly matching
 `veer_plugin_sdk.__all__`.  Five groups:
 
@@ -144,7 +144,7 @@ Field reference (all inside `Info.vstudio`):
 
 | Key | Required | Meaning |
 |---|---|---|
-| `sdkVersion` | **yes** | the SDK major you built against (`"1"`).  A manifest without it is **refused**, and a mismatch with the host's accepted major is refused too — fail-closed |
+| `sdkVersion` | **yes** | the SDK major you built against (`"1"`).  A manifest without it is **refused**, and a mismatch with the host's accepted major is refused too — fail-closed.  Read the accepted major from the package (`from veer_plugin_sdk import CURRENT_SDK_VERSION`) instead of asking the host |
 | `version` | recommended | your plugin's semantic version |
 | `displayName` | recommended | human-readable name |
 | `description` | recommended | one paragraph |
@@ -557,6 +557,32 @@ in-memory USD stage:
 pip install "veer-studio-plugin-sdk[testing]"
 ```
 
+### The boundary: unit vs integration
+
+One rule decides where a test belongs (this is the whole testing story —
+the [API reference §7](api-reference.md#7-testing-toolkit) repeats the
+table, not the rule):
+
+- **Unit tests are pip-only.**  They import `veer_plugin_sdk` and
+  `veer_plugin_sdk.testing`, run on any CI with
+  `pip install "veer-studio-plugin-sdk[testing]"`, and never touch
+  `core.*`.  Everything in this section is unit-tier: context factories,
+  project roots, manifest parsers (`parse_permission_block`,
+  `parse_tool_workspaces`, `parse_workspace_buttons`),
+  `CURRENT_SDK_VERSION`, `testing.stage_pin`, the projection doors.
+- **Integration tests need a host checkout.**  They answer questions only
+  the running host can answer: *will this Studio accept this archive?*
+  (`plugin_install` — platform, wheel, and permission gates), *does the
+  registry discover and load this plugin?* (`PluginRegistry`), *does a
+  real stage open and a real Save refuse under the pin?*  Keep them in
+  their own files, tagged as host-bound, so the unit tier stays green
+  without Studio.
+
+A test that asserts "does *my code* do X given a mock context" is unit;
+a test that asserts "will *this host* accept, load, or enforce X" is
+integration.  When in doubt, write it unit — if it cannot be written
+that way, it is integration by definition.
+
 ```python
 from veer_plugin_sdk.testing import tool_context, create_stage, MockStageManager
 
@@ -609,6 +635,11 @@ Useful properties of the toolkit:
 - The mocks are `isinstance`-compatible with the host's types but do not
   run Veer Studio — **assert on what *your* code did**, not on simulated
   app behaviour.
+- **`testing.stage_pin`** — the pin protocol for long-job tests:
+  `pin` / `unpin` / `check_unpinned` / `exempt_for(owner_plugin_id)`.
+  In-host it *is* the host's pin (shared state); standalone it is the
+  same pure copy.  Your manifest's accepted `sdkVersion` reads as
+  `CURRENT_SDK_VERSION` from `veer_plugin_sdk` — no host import.
 
 These tests run identically in your CI — this repo's own
 `.github/workflows/ci.yml` does exactly this on 3.12.

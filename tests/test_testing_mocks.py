@@ -25,6 +25,7 @@ from veer_plugin_sdk.testing import (  # noqa: E402
     editor_context,
     panel_context,
     site_path,
+    stage_pin,
     tool_context,
 )
 from veer_plugin_sdk.testing.mock_contexts import mutation_context  # noqa: E402
@@ -231,3 +232,29 @@ def test_mutation_context_defaults():
     assert mut.translate("Ctx", "Hi") == "Hi"
     assert mut.is_atlas_object("/Site/Thing") is False
     assert mut.is_navigable_target("/Site/Thing") is False
+
+
+def test_stage_pin_protocol_runs_standalone():
+    """pin → check refuses → owner exempts → unpin (sdk#12)."""
+    stage_pin.unpin()  # idempotent — a prior test's pin must not leak
+    assert stage_pin.is_pinned() is False
+
+    stage_pin.pin("unit job", owner_plugin_id="my.plugin")
+    assert stage_pin.is_pinned() is True
+    assert stage_pin.pin_owner() == "my.plugin"
+    assert stage_pin.pin_reason() == "unit job"
+
+    with stage_pin.exempt_for("my.plugin"):
+        stage_pin.check_unpinned("write")  # owner passes while pinned
+
+    with pytest.raises(stage_pin.StagePinnedError):
+        stage_pin.check_unpinned("write")
+
+    with pytest.raises(stage_pin.StagePinnedError):
+        with stage_pin.exempt_for("someone.else"):
+            pass
+
+    stage_pin.unpin()
+    stage_pin.check_unpinned("write")  # unpinned: everyone passes
+    with stage_pin.exempt_for("anyone"):  # no pin → no-op yield
+        pass

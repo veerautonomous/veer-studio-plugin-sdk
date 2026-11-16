@@ -21,6 +21,7 @@ PORTS = [
     "ATTR_SOURCE_CRS",
     "BaseOverlayRenderer",
     "CloudUnit",
+    "CURRENT_SDK_VERSION",
     "CreationSession",
     "CreationVerb",
     "Diagnostic",
@@ -135,6 +136,27 @@ def test_standalone_doors_are_callable():
     """The context-less doors (sdk#11) are real functions, not stubs."""
     for name in STANDALONE:
         assert callable(getattr(veer_plugin_sdk, name)), name
+
+
+def test_version_answer_is_the_host_accepted_major():
+    """The plugInfo ``sdkVersion`` check never needs a host import (sdk#12)."""
+    assert veer_plugin_sdk.CURRENT_SDK_VERSION == "1"
+
+
+def test_manifest_parsers_are_importable_supporting_names():
+    """Pure plugInfo parsers — unit-test a manifest with pip only (sdk#12)."""
+    from veer_plugin_sdk import (
+        parse_permission_block,
+        parse_tool_workspaces,
+        parse_workspace_buttons,
+    )
+
+    scopes, reasons = parse_permission_block("demo", None)
+    assert scopes["read"] == ["*"] and reasons == {"write": {}, "read": {}}
+    assert parse_tool_workspaces("demo", {"toolWorkspaces": {"t": "w"}}) == {
+        "t": "w"
+    }
+    assert parse_workspace_buttons("demo", {}) == {}
 
 
 def test_events_module_is_reachable():

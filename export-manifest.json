@@ -31,6 +31,12 @@
       "signature": "class:Z_OFFSET: float;render(self, frustum, buf_w: 'int', buf_h: 'int') -> 'None'"
     },
     {
+      "kind": "const",
+      "module": "core.ports",
+      "name": "CURRENT_SDK_VERSION",
+      "signature": "const:'1'"
+    },
+    {
       "kind": "class",
       "module": "core.ports",
       "name": "CloudUnit",
@@ -421,5 +427,5 @@
       "signature": "def(callback: 'Callable[[DomainEvent], None]') -> 'None'"
     }
   ],
-  "version": "1.7.0"
+  "version": "1.8.0"
 }

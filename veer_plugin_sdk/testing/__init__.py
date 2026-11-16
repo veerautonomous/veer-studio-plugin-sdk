@@ -11,6 +11,7 @@ from .mock_contexts import (
     editor_context,
 )
 from .mock_stage_manager import MockStageManager
+from . import stage_pin
 
 __all__ = [
     "create_stage",
@@ -20,4 +21,5 @@ __all__ = [
     "panel_context",
     "editor_context",
     "MockStageManager",
+    "stage_pin",
 ]

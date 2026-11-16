@@ -13,7 +13,7 @@ from veer_plugin_sdk import IToolProvider, ToolContext, ToolResult
 
 ## How to read this reference
 
-**Two tiers of names.**  `export-manifest.json` pins the 70 names of the
+**Two tiers of names.**  `export-manifest.json` pins the 71 names of the
 stability contract — the names in `veer_plugin_sdk.__all__`, asserted by
 `tests/test_surface.py`.  The package additionally exports *supporting
 types* that the contract's own signatures refer to (`GizmoSpec`,
@@ -1061,7 +1061,7 @@ creation-session hooks.
 | Field | Signature | Meaning |
 |---|---|---|
 | `latlon_to_local_enu` | `(lat, lon, ele=0.0, *, origin) -> (x, y, z)` | WGS84 → local ENU; `origin` (SiteOrigin) **required** — `None` raises `ValueError` |
-| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-70-name-contract) records |
+| `cloud_units` | `(roles=None, current_only=False) -> list[CloudUnit]` | cloud discovery; pass `GEOMETRIC_ROLES` to keep only geometric-derivation-readable clouds.  Returns [`CloudUnit`](#cloudunit-in-the-71-name-contract) records |
 
 ### Identity and navigation queries
 
@@ -1619,10 +1619,10 @@ for internal use).
 
 Reachable as `from veer_plugin_sdk import ...`.  Most of this section is
 the *supporting* tier — shipped and versioned with the package but not
-pinned by the 70-name manifest.  The contract-tier members: the two
+pinned by the 71-name manifest.  The contract-tier members: the two
 [projection doors](#projection-doors-contract-tier) and the
 [plugin data root](#plugin-data-root-contract-tier) (sdk#11),
-`GEOMETRIC_ROLES`, and the twelve [project roots](#project-roots).
+`CURRENT_SDK_VERSION`, `GEOMETRIC_ROLES`, and the twelve [project roots](#project-roots).
 
 > **Back from excision, with implementations.**  `latlon_to_local_enu`,
 > `batch_latlon_to_local_enu`, and `plugin_data_dir` were excised from the
@@ -1636,6 +1636,14 @@ pinned by the 70-name manifest.  The contract-tier members: the two
 > reach them.  `read_osm_nodes` stays host-only.
 
 ```python
+CURRENT_SDK_VERSION = "1"   # (in the 71-name contract)
+```
+The SDK contract major the host accepts — what `vstudio.sdkVersion` in
+your `plugInfo.json` must equal.  Same value the install gate and
+`PluginRegistry` compare against; read it from the package so a version
+check never needs a host import.
+
+```python
 def parse_permission_block(name: str, raw) -> tuple[dict, dict]
 ```
 Validate a `vstudio.permissions` block → `(scopes, reasons)`:
@@ -1644,6 +1652,17 @@ reason}, "read": {...}}`.  Every declared scope needs a one-line reason;
 an absent block keeps the read-only default (`read: ["*"]`,
 `write: []`).  Raises `ValueError` for any other shape — refused at
 discovery.
+
+```python
+def parse_tool_workspaces(name: str, atlas: dict) -> dict
+def parse_workspace_buttons(name: str, atlas: dict) -> dict
+```
+Validate `vstudio.toolWorkspaces` (tool id → predefined workspace id) and
+`vstudio.workspace` (workspace id → FAB button entries) the way
+`PluginMeta` does at discovery: unknown workspace ids pass through, a
+malformed block logs and is ignored, a `commandId` not namespaced under
+`<name>.` is dropped — never fatal.  Pure parsers for unit-testing your
+manifest without the host.
 
 ```python
 def matrix_to_list(m) -> list        # Gf.Matrix4d -> 16 floats for glLoadMatrixd
@@ -1686,12 +1705,12 @@ ROLE_PRECISE    = "precise"
 ROLE_APPEARANCE = "appearance"
 ROLE_DERIVED    = "derived"
 CLOUD_ROLES     = (ROLE_PRECISE, ROLE_APPEARANCE, ROLE_DERIVED)
-GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 70-name contract)
+GEOMETRIC_ROLES = (ROLE_PRECISE, ROLE_DERIVED)   # (in the 71-name contract)
 ```
 Pass `GEOMETRIC_ROLES` to `ctx.cloud_units(roles=...)` to keep only the
 clouds a geometric derivation (mesh generation, snapping) may read.
 
-### CloudUnit (in the 70-name contract)
+### CloudUnit (in the 71-name contract)
 
 `ctx.cloud_units()` returns a list of `CloudUnit` — one frozen record per
 cloud, importable as `from veer_plugin_sdk import CloudUnit`:
@@ -1756,7 +1775,7 @@ root) — documented with the import vocabulary in
 from veer_plugin_sdk.testing import (
     create_stage, site_path, assets_root,
     tool_context, panel_context, editor_context,
-    MockStageManager,
+    MockStageManager, stage_pin,
 )
 from veer_plugin_sdk.testing.mock_contexts import mutation_context
 ```
@@ -1766,6 +1785,21 @@ Requires the `[testing]` extra (`usd-core`):
 ```bash
 pip install "veer-studio-plugin-sdk[testing]"
 ```
+
+### Unit or integration?
+
+Two tiers, one boundary (the full story lives in the
+[author guide — testing](author-guide.md#testing-without-veer-studio)):
+
+| Tier | Imports | Needs | Covers |
+|---|---|---|---|
+| **Unit** (the default) | `veer_plugin_sdk`, `veer_plugin_sdk.testing` | pip only | context factories, project roots, manifest parsers, `CURRENT_SDK_VERSION`, `stage_pin`, projection doors — anything that answers "does *my code* do X given a mock" |
+| **Integration** | a host checkout (`ATLAS_STUDIO_ROOT`, `env.sh`) | Veer Studio source tree | the install gate (`plugin_install`), `PluginRegistry` discovery/dependency checks, fixture layers that open a real project — anything that answers "will *this host* accept/load/enforce X" |
+
+Keep integration tests in their own files so the unit tier stays runnable
+on any CI.  Never reach for `import core.…` in either tier's test
+*modules* — the host half goes through the fixture layer or an explicitly
+host-bound file.
 
 ### Context factories
 
@@ -1883,15 +1917,35 @@ The mocks **behave like the host's types** (`isinstance` holds) but do
 not run Veer Studio.  Assert on *your* logic, not on simulated app
 behaviour.
 
+### Stage pin
+
+```python
+from veer_plugin_sdk.testing import stage_pin
+
+stage_pin.pin("my long job", owner_plugin_id="my.plugin")
+stage_pin.check_unpinned("save")        # raises StagePinnedError while pinned
+stage_pin.unpin()                       # idempotent teardown
+
+with stage_pin.exempt_for("my.plugin"):  # the owner's only door
+    ...
+```
+
+The pin protocol the host enforces while a background job owns the
+stage.  In-host the testing names *are* the host's `core.stage_pin`
+objects (a pin set here is the pin `StageManager` sees); standalone the
+package ships the same pure copy.  Also: `is_pinned()`, `pin_reason()`,
+`pin_owner()`, and the nested `exempt()` context manager.
+
 ---
 
 # 8. Exported-name index
 
-## Contract (70 names, pinned by `export-manifest.json`)
+## Contract (71 names, pinned by `export-manifest.json`)
 
-**Ports & metadata (28):**
+**Ports & metadata (29):**
 `ATTR_IMPORT_MODE`, `ATTR_IMPORT_TRANSFORM`, `ATTR_SOURCE_CRS`,
-`BaseOverlayRenderer`, `CloudUnit`, `CreationSession`, `CreationVerb`,
+`BaseOverlayRenderer`, `CloudUnit`, `CURRENT_SDK_VERSION`,
+`CreationSession`, `CreationVerb`,
 `Diagnostic`, `ExportReport`, `GEOMETRIC_ROLES`, `IExporter`,
 `IFileImporter`, `IFusionPlugin`, `IIntegrationPlugin`, `IPanelFactory`,
 `IPluginPreferences`, `IStageContributor`, `IToolProvider`, `IValidator`,
@@ -1932,7 +1986,8 @@ behaviour.
 **Sections:** `SectionSpec`, `FieldSpec`, `PrimAction`,
 `SectionSaveRefused`, `SECTION_DOMAINS`, `SECTION_FIELD_KINDS`
 
-**Manifest & layers:** `LayerStrategy`, `parse_permission_block`
+**Manifest & layers:** `LayerStrategy`, `parse_permission_block`,
+`parse_tool_workspaces`, `parse_workspace_buttons`
 
 **Errors:** `LayerPermissionError`, `DraftSessionDirtyError`
 

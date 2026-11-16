@@ -33,6 +33,12 @@ if TYPE_CHECKING:
 # Plugin metadata — typed wrapper for plugInfo.json "vstudio" blocks
 # ---------------------------------------------------------------------------
 
+# The SDK contract major this host accepts — plugInfo's ``vstudio.sdkVersion``.
+# Defined here (the static-export source) so the pip package ships the same
+# object the install gate and PluginRegistry compare against; the registry
+# aliases it rather than restating the literal (veer-studio-plugin-sdk#12).
+CURRENT_SDK_VERSION = "1"
+
 
 @dataclass
 class LayerStrategy:
@@ -54,7 +60,7 @@ class LayerStrategy:
     """
 
 
-def _parse_tool_workspaces(name: str, atlas: dict) -> dict:
+def parse_tool_workspaces(name: str, atlas: dict) -> dict:
     """Parse ``vstudio.toolWorkspaces`` — tool id → predefined workspace id.
 
     Declares where a registered tool lands in the Tools menu.  Unknown
@@ -71,7 +77,7 @@ def _parse_tool_workspaces(name: str, atlas: dict) -> dict:
     return {str(tool_id): str(ws_id) for tool_id, ws_id in raw.items()}
 
 
-def _parse_workspace_buttons(name: str, atlas: dict) -> dict:
+def parse_workspace_buttons(name: str, atlas: dict) -> dict:
     """Parse ``vstudio.workspace`` — workspace id → validated FAB entry dicts.
 
     A command entry's ``commandId`` must be namespaced under the plugin
@@ -301,8 +307,8 @@ class PluginMeta:
             dependencies=atlas.get("dependencies", {}),
             permissions=permissions,
             enabled=bool(atlas.get("enabled", True)),
-            tool_workspaces=_parse_tool_workspaces(name, atlas),
-            workspace_buttons=_parse_workspace_buttons(name, atlas),
+            tool_workspaces=parse_tool_workspaces(name, atlas),
+            workspace_buttons=parse_workspace_buttons(name, atlas),
         )
 
 
