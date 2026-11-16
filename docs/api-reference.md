@@ -1499,7 +1499,7 @@ the registry during discovery, never by plugin authors.  Useful to *read*:
 |---|---|---|
 | `name` | (folder name) | plugin id / directory name |
 | `version` | `version` | semantic version, e.g. `"0.1.0"` |
-| `sdk_version` | `sdkVersion` | SDK major built against — **required** |
+| `sdk_version` | `sdkVersion` | SDK release built against (dotted triple) — **required** |
 | `display_name` | `displayName` | human-readable name |
 | `description` | `description` | one paragraph |
 | `author` | `author` | author or team |
@@ -1636,10 +1636,18 @@ pinned by the 71-name manifest.  The contract-tier members: the two
 ```python
 CURRENT_SDK_VERSION = "1"   # (in the 71-name contract)
 ```
-The SDK contract major the host accepts — what `vstudio.sdkVersion` in
-your `plugInfo.json` must equal.  Same value the install gate and
-`PluginRegistry` compare against; read it from the package so a version
-check never needs a host import.
+The SDK contract major the host accepts — the major parsed out of
+`vstudio.sdkVersion`, which declares the full release (like `"1.8.1"`).
+Same value the install gate and `PluginRegistry` compare against; your
+*release* reads as `SDK_VERSION` below, so a version check never needs a
+host import.
+
+```python
+SDK_VERSION = "1.8.1"   # package metadata, not a contract name
+```
+The release this package is — declare it as `vstudio.sdkVersion`.  Read it
+from the wheel you pinned; an in-host import reports the tree's local stamp
+(`0.0.0` from a source checkout), not a release.
 
 ```python
 def parse_permission_block(name: str, raw) -> tuple[dict, dict]

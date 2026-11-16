@@ -96,7 +96,7 @@ a real published plugin):
             "Info": {
                 "vstudio": {
                     "version": "0.1.0",
-                    "sdkVersion": "1",
+                    "sdkVersion": "1.8.1",
                     "displayName": "My Plugin",
                     "description": "One paragraph on what it does.",
                     "author": "Me",
@@ -144,7 +144,7 @@ Field reference (all inside `Info.vstudio`):
 
 | Key | Required | Meaning |
 |---|---|---|
-| `sdkVersion` | **yes** | the SDK major you built against (`"1"`).  A manifest without it is **refused**, and a mismatch with the host's accepted major is refused too — fail-closed.  Read the accepted major from the package (`from veer_plugin_sdk import CURRENT_SDK_VERSION`) instead of asking the host |
+| `sdkVersion` | **yes** | the SDK release you built against, a dotted triple like `"1.8.1"`.  A manifest without it is **refused**, and so is a malformed value, a different contract major, or a release newer than the host provides — fail-closed, with both numbers in the reason.  Read your release from the package (`from veer_plugin_sdk import SDK_VERSION`) instead of asking the host |
 | `version` | recommended | your plugin's semantic version |
 | `displayName` | recommended | human-readable name |
 | `description` | recommended | one paragraph |
@@ -639,8 +639,8 @@ Useful properties of the toolkit:
 - **`testing.stage_pin`** — the pin protocol for long-job tests:
   `pin` / `unpin` / `check_unpinned` / `exempt_for(owner_plugin_id)`.
   In-host it *is* the host's pin (shared state); standalone it is the
-  same pure copy.  Your manifest's accepted `sdkVersion` reads as
-  `CURRENT_SDK_VERSION` from `veer_plugin_sdk` — no host import.
+  same pure copy.  Your manifest's `sdkVersion` reads as
+  `SDK_VERSION` from `veer_plugin_sdk` — no host import.
 
 These tests run identically in your CI — this repo's own
 `.github/workflows/ci.yml` does exactly this on 3.12.
@@ -664,7 +664,7 @@ These tests run identically in your CI — this repo's own
   must define `register(registry)`.  Check your folder is on
   `PXR_PLUGINPATH_NAME` or in the user plugins directory.
 - **Plugin listed but disabled with an SDK/permission reason** — read
-  the reason in the host's plugin list: missing/mismatched `sdkVersion`,
+  the reason in the host's plugin list: missing or unacceptable `sdkVersion`,
   an unmet `minCoreVersion` or dependency, or a malformed
   `permissions` block (every scope needs a one-line reason).
 - **`LayerPermissionError`** — your `permissions.write` doesn't cover the

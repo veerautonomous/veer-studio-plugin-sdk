@@ -143,6 +143,13 @@ def test_version_answer_is_the_host_accepted_major():
     assert veer_plugin_sdk.CURRENT_SDK_VERSION == "1"
 
 
+def test_package_version_is_a_release_triple():
+    """``SDK_VERSION`` is what plugInfo's ``sdkVersion`` declares (#474)."""
+    parts = veer_plugin_sdk.SDK_VERSION.split(".")
+    assert len(parts) == 3 and all(part.isdigit() for part in parts)
+    assert veer_plugin_sdk.__version__ == veer_plugin_sdk.SDK_VERSION
+
+
 def test_manifest_parsers_are_importable_supporting_names():
     """Pure plugInfo parsers — unit-test a manifest with pip only (sdk#12)."""
     from veer_plugin_sdk import (

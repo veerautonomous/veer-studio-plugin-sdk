@@ -66,6 +66,11 @@ from veer_plugin_sdk.paths import (
     reference_water_root,
 )
 
+# The release this package is — what plugInfo's vstudio.sdkVersion declares
+# (#474).  Read it from the wheel you pinned, not from an in-host import.
+__version__ = "1.8.2"
+SDK_VERSION = __version__
+
 __all__ = [
     'ATTR_IMPORT_MODE',
     'ATTR_IMPORT_TRANSFORM',

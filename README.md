@@ -5,8 +5,8 @@ the Veer Studio source tree: the port ABCs, the bounded-context types, the
 event bus, and a testing toolkit (mock contexts, mock stage manager, mock USD
 stage) — everything needed to write and CI-test a plugin standalone.
 
-- **Version:** `1.8.1` — generated from Veer Studio source
-  `a960cbe832585a891f12fe2820aedcb320c433fe`
+- **Version:** `1.8.2` — generated from Veer Studio source
+  `c14f131c6038ae3ca5b5407af1bf7ec65405a33d`
 - **Docs:** [author guide](docs/author-guide.md) (walkthrough) ·
   [API reference](docs/api-reference.md) (classes, methods, data structures)
 - **Issues:** report SDK problems here
@@ -19,13 +19,13 @@ stage) — everything needed to write and CI-test a plugin standalone.
 From a release tag (recommended — the wheel is also attached to the release):
 
 ```bash
-pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.8.1"
+pip install "veer-studio-plugin-sdk @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.8.2"
 ```
 
 For plugin tests that build USD stages, add the testing extra:
 
 ```bash
-pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.8.1"
+pip install "veer-studio-plugin-sdk[testing] @ git+https://github.com/veerautonomous/veer-studio-plugin-sdk@v1.8.2"
 ```
 
 ## Quickstart
@@ -82,10 +82,11 @@ the [API reference](docs/api-reference.md) for every class and method.
 
 ## Versioning
 
-Semantic versioning from `1.0.0`. A plugin manifest declares the SDK major it
-was built against (`sdkVersion` — required; the host refuses a manifest that
-omits it); a major bump means the contract changed in
-a way your plugin must answer to. The export manifest in this repo is the
+Semantic versioning from `1.0.0`. A plugin manifest declares the SDK release
+it was built against (`sdkVersion` — required, a dotted triple like
+`"1.8.1"`; the host refuses a manifest that omits it, or one that declares a
+release this host does not provide); a major bump means the contract changed
+in a way your plugin must answer to. The export manifest in this repo is the
 machine-checkable record of the surface each release carries.
 
 ## License
